@@ -36,6 +36,32 @@
         .nav-brand {
             font-size: 1.5rem;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+        }
+
+        .logo svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* For header sections in index.html and upload.html */
+        .header-logo {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+        }
+
+        .header-logo svg {
+            width: 100%;
+            height: 100%;
         }
 
         .nav-menu {
@@ -313,7 +339,54 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="nav-brand">GrowthScope</div>
+            <div class="nav-brand">
+                <div class="logo">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <!-- Gradient definitions -->
+                            <linearGradient id="barGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#7ED321;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#4A90E2;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="barGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#50E3C2;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#4A90E2;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="barGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#7ED321;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#417505;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#7ED321;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#50E3C2;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#4A90E2;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="curveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#7ED321;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#0F4F36;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        
+                        <!-- Growth bars -->
+                        <rect x="15" y="70" width="8" height="20" fill="url(#barGradient1)" rx="1"/>
+                        <rect x="28" y="55" width="8" height="35" fill="url(#barGradient2)" rx="1"/>
+                        <rect x="41" y="40" width="8" height="50" fill="url(#barGradient3)" rx="1"/>
+                        <rect x="54" y="25" width="8" height="65" fill="url(#barGradient1)" rx="1"/>
+                        
+                        <!-- Curved arrow base -->
+                        <path d="M 15 85 Q 35 95 55 85 Q 75 75 85 45" 
+                              stroke="url(#curveGradient)" stroke-width="6" fill="none" stroke-linecap="round"/>
+                        
+                        <!-- Arrow head -->
+                        <path d="M 70 35 L 85 20 L 90 25 L 85 20 L 80 15" 
+                              fill="url(#arrowGradient)" stroke="url(#arrowGradient)" stroke-width="2" stroke-linejoin="round"/>
+                        
+                        <!-- Additional arrow head detail -->
+                        <polygon points="85,20 90,15 95,20 85,30" fill="url(#arrowGradient)"/>
+                    </svg>
+                </div>
+                GrowthScope
+            </div>
             <div class="nav-menu">
                 <a href="/dashboard/executive" class="nav-item">Executive</a>
                 <a href="/dashboard/financial" class="nav-item">Financial</a>
