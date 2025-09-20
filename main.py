@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 from google import genai
 from google.genai import types
 import tempfile
+import numpy as np
+from datetime import datetime, timedelta
 
 # Initialize Gemini client with error handling
 GEMINI_API_KEY = "AIzaSyD27VX_Kjr8wmfw3icVwxtMWTLgGc5yw3Q"
@@ -720,6 +722,175 @@ def trends_dashboard():
     
     except Exception as e:
         flash(f'Error loading trends dashboard: {str(e)}')
+        return redirect(url_for('index'))
+
+def analyze_inventory_data(df):
+    """Analyze inventory data and calculate stock requirements and restock dates"""
+    try:
+        if df.empty:
+            return None
+
+        # Check if we have stock data
+        if 'Stock_For_Month' not in df.columns:
+            return None
+
+        # Get the latest month's data for current stock levels
+        df['Date'] = pd.to_datetime(df['Date'])
+        latest_month = df['Date'].max().to_period('M')
+        current_month_data = df[df['Date'].dt.to_period('M') == latest_month]
+
+        # Calculate monthly sales velocity for each product
+        monthly_sales = df.groupby(['Product', df['Date'].dt.to_period('M')])['Quantity'].sum().reset_index()
+        monthly_sales.columns = ['Product', 'Month', 'Monthly_Sales']
+
+        # Calculate average monthly sales and stock requirements
+        avg_monthly_sales = monthly_sales.groupby('Product')['Monthly_Sales'].mean().reset_index()
+        avg_monthly_sales.columns = ['Product', 'Avg_Monthly_Sales']
+
+        # Get current stock levels (latest month)
+        current_stock = current_month_data.groupby('Product').agg({
+            'Stock_For_Month': 'first',  # Assuming stock is same across all entries for a product in a month
+            'Cost_Price': 'mean',
+            'Selling_Price': 'mean'
+        }).reset_index()
+
+        # Merge sales velocity with current stock
+        inventory_analysis = current_stock.merge(avg_monthly_sales, on='Product', how='left')
+        inventory_analysis['Avg_Monthly_Sales'] = inventory_analysis['Avg_Monthly_Sales'].fillna(0)
+
+        # Calculate required stock (2 months of average sales + safety buffer)
+        inventory_analysis['Required_Stock'] = (inventory_analysis['Avg_Monthly_Sales'] * 2.5).round().astype(int)
+        inventory_analysis['Current_Stock'] = inventory_analysis['Stock_For_Month']
+        inventory_analysis['Shortage'] = np.maximum(0, inventory_analysis['Required_Stock'] - inventory_analysis[
+            'Current_Stock'])
+
+        # Calculate stock level categories
+        def get_stock_level(row):
+            if row['Current_Stock'] <= row['Avg_Monthly_Sales'] * 0.5:
+                return 'Critical'
+            elif row['Current_Stock'] <= row['Avg_Monthly_Sales']:
+                return 'Low'
+            elif row['Current_Stock'] <= row['Avg_Monthly_Sales'] * 2:
+                return 'Adequate'
+            else:
+                return 'High'
+
+        inventory_analysis['Stock_Level'] = inventory_analysis.apply(get_stock_level, axis=1)
+
+        # Calculate next restock date based on current stock and sales velocity
+        def calculate_restock_date(row):
+            if row['Avg_Monthly_Sales'] <= 0:
+                return "No sales data"
+
+            days_of_stock = (row['Current_Stock'] / (row['Avg_Monthly_Sales'] / 30))
+
+            if days_of_stock <= 7:
+                restock_days = 3  # Urgent
+            elif days_of_stock <= 30:
+                restock_days = int(days_of_stock * 0.7)  # Restock before running out
+            else:
+                restock_days = 30  # Monthly review
+
+            restock_date = datetime.now() + timedelta(days=restock_days)
+            return restock_date.strftime('%Y-%m-%d')
+
+        def calculate_days_until_restock(row):
+            if row['Avg_Monthly_Sales'] <= 0:
+                return 999
+
+            days_of_stock = (row['Current_Stock'] / (row['Avg_Monthly_Sales'] / 30))
+
+            if days_of_stock <= 7:
+                return 3
+            elif days_of_stock <= 30:
+                return int(days_of_stock * 0.7)
+            else:
+                return 30
+
+        inventory_analysis['Next_Restock_Date'] = inventory_analysis.apply(calculate_restock_date, axis=1)
+        inventory_analysis['Days_Until_Restock'] = inventory_analysis.apply(calculate_days_until_restock, axis=1)
+
+        # Calculate stock value
+        inventory_analysis['Stock_Value'] = inventory_analysis['Current_Stock'] * inventory_analysis['Cost_Price']
+
+        # Prepare summary statistics
+        total_products = len(inventory_analysis)
+        low_stock_count = len(inventory_analysis[inventory_analysis['Stock_Level'].isin(['Low', 'Critical'])])
+        critical_stock_count = len(inventory_analysis[inventory_analysis['Stock_Level'] == 'Critical'])
+        total_stock_value = inventory_analysis['Stock_Value'].sum()
+
+        # Stock distribution for charts
+        stock_distribution = inventory_analysis['Stock_Level'].value_counts().to_dict()
+
+        # Restock timeline
+        restock_timeline = []
+        for days in [3, 7, 14, 30]:
+            count = len(inventory_analysis[inventory_analysis['Days_Until_Restock'] <= days])
+            date = (datetime.now() + timedelta(days=days)).strftime('%m/%d')
+            restock_timeline.append({'date': f"Next {days}d", 'count': count})
+
+        # Convert to list of dictionaries for template
+        products_list = []
+        for _, row in inventory_analysis.iterrows():
+            products_list.append({
+                'name': row['Product'],
+                'current_stock': int(row['Current_Stock']),
+                'required_stock': int(row['Required_Stock']),
+                'shortage': int(row['Shortage']),
+                'stock_level': row['Stock_Level'],
+                'next_restock_date': row['Next_Restock_Date'],
+                'days_until_restock': int(row['Days_Until_Restock']),
+                'stock_value': float(row['Stock_Value'])
+            })
+
+        return {
+            'total_products': total_products,
+            'low_stock_count': low_stock_count,
+            'critical_stock_count': critical_stock_count,
+            'total_stock_value': float(total_stock_value),
+            'stock_distribution': stock_distribution,
+            'restock_timeline': restock_timeline,
+            'products': products_list
+        }
+
+    except Exception as e:
+        print(f"Error analyzing inventory data: {e}")
+        return None
+
+
+# Add this route to your main.py file
+@app.route('/dashboard/inventory')
+def inventory_dashboard():
+    if 'csv_file_path' not in session:
+        flash('Please upload a CSV file first')
+        return redirect(url_for('index'))
+
+    try:
+        insights, error = analyze_sales_data(
+            session['csv_file_path'],
+            session.get('date_filter', 'all'),
+            session.get('start_date'),
+            session.get('end_date')
+        )
+
+        if error:
+            flash(f'Error analyzing data: {error}')
+            return redirect(url_for('index'))
+
+        # Analyze inventory data
+        inventory_data = None
+        if insights and 'raw_data' in insights:
+            inventory_data = analyze_inventory_data(insights['raw_data'])
+
+        # Remove raw_data before passing to template
+        template_insights = {k: v for k, v in insights.items() if k != 'raw_data'} if insights else None
+
+        return render_template('inventory_dashboard.html',
+                               insights=template_insights,
+                               inventory_data=inventory_data)
+
+    except Exception as e:
+        flash(f'Error loading inventory dashboard: {str(e)}')
         return redirect(url_for('index'))
 
 if __name__ == '__main__':
