@@ -26,83 +26,204 @@
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             padding: 40px;
-            max-width: 400px;
+            max-width: 450px;
             width: 100%;
         }
 
-        .logo {
+        .logo-section {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
-        .logo h1 {
-            font-size: 2.5rem;
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .logo-svg {
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .brand-name {
+            font-size: 3rem;
+            font-weight: 300;
             color: #667eea;
-            margin-bottom: 10px;
+            margin: 0;
+            letter-spacing: -1px;
         }
 
-        .logo p {
+        .brand-subtitle {
             color: #7f8c8d;
+            font-size: 1.1rem;
+            margin-top: 5px;
+        }
+
+        .demo-note {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 14px;
+            color: #856404;
+            font-weight: 500;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: 600;
             color: #2c3e50;
+            font-size: 15px;
         }
 
         .form-group input {
             width: 100%;
-            padding: 12px 15px;
+            padding: 15px 18px;
             border: 2px solid #e9ecef;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
         }
 
         .form-group input:focus {
             outline: none;
             border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .login-btn {
             width: 100%;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 12px;
+            padding: 15px 20px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             margin-top: 10px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
         .login-btn:hover {
-            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
         }
 
-        .demo-note {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 14px;
-            color: #856404;
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .login-btn:hover::before {
+            left: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 30px 25px;
+                max-width: 380px;
+            }
+
+            .brand-name {
+                font-size: 2.5rem;
+            }
+
+            .logo-svg {
+                width: 50px;
+                height: 50px;
+            }
+
+            .logo-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .brand-name {
+                font-size: 2rem;
+            }
+
+            .logo-container {
+                gap: 8px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <div class="logo">
-            <h1>GrowthScope</h1>
-            <p>Business Analytics Platform</p>
+        <div class="logo-section">
+            <div class="logo-container">
+                <div class="logo-svg">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <!-- Gradient definitions -->
+                            <linearGradient id="barGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#7ED321;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#4A90E2;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="barGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#50E3C2;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#4A90E2;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="barGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#7ED321;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#417505;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#7ED321;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#50E3C2;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#4A90E2;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="curveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#7ED321;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#0F4F36;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+
+                        <!-- Growth bars -->
+                        <rect x="15" y="70" width="8" height="20" fill="url(#barGradient1)" rx="1"/>
+                        <rect x="28" y="55" width="8" height="35" fill="url(#barGradient2)" rx="1"/>
+                        <rect x="41" y="40" width="8" height="50" fill="url(#barGradient3)" rx="1"/>
+                        <rect x="54" y="25" width="8" height="65" fill="url(#barGradient1)" rx="1"/>
+
+                        <!-- Curved arrow base -->
+                        <path d="M 15 85 Q 35 95 55 85 Q 75 75 85 45"
+                              stroke="url(#curveGradient)" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+                        <!-- Arrow head -->
+                        <polygon points="85,20 90,15 95,20 85,30" fill="url(#arrowGradient)"/>
+                    </svg>
+                </div>
+                <h1 class="brand-name">GrowthScope</h1>
+            </div>
+            <p class="brand-subtitle">Business Analytics Platform</p>
         </div>
 
         <div class="demo-note">
@@ -123,7 +244,5 @@
             <button type="submit" class="login-btn">Login</button>
         </form>
     </div>
-
-    <!-- JS login handler removed. Using server side POST. -->
 </body>
 </html>
