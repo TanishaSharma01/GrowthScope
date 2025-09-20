@@ -215,6 +215,13 @@
             background: rgba(255,255,255,0.3);
         }
 
+        .no-data {
+            text-align: center;
+            color: #7f8c8d;
+            padding: 20px;
+            font-style: italic;
+        }
+
         @media (max-width: 768px) {
             .nav-menu {
                 display: none;
@@ -239,11 +246,13 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="nav-brand">GrowthScope </div>
+            <div class="nav-brand">GrowthScope</div>
             <div class="nav-menu">
                 <a href="/dashboard/executive" class="nav-item active">Executive</a>
                 <a href="/dashboard/financial" class="nav-item">Financial</a>
                 <a href="/dashboard/growth" class="nav-item">Growth</a>
+                <a href="/dashboard/trends" class="nav-item">Market Trends</a>
+                <a href="/dashboard/chat" class="nav-item">Chat</a>
                 <a href="/" class="nav-upload">Upload New Data</a>
             </div>
         </div>
@@ -319,7 +328,7 @@
         <!-- Charts Section -->
         <div class="chart-grid">
             <div class="chart-card">
-                <h3 class="chart-title">Monthly Revenue & Profit Trend</h3>
+                <h3 class="chart-title">Monthly Revenue, Profit & Median Ticket Cost</h3>
                 <div class="chart-container">
                     <canvas id="revenueChart"></canvas>
                 </div>
@@ -365,7 +374,7 @@
                     <strong>Product Mix:</strong> {{ insights.category_summary|length }} product categories contributing to revenue
                 </li>
                 {% endif %}
-                {% if insights.monthly_trends|length > 1 %}
+                {% if insights.monthly_trends and insights.monthly_trends|length > 1 %}
                 <li class="insight-item">
                     <strong>Monthly Performance:</strong> Analysis covers {{ insights.monthly_trends|length }} months of business activity
                 </li>
@@ -375,112 +384,180 @@
     </div>
 
     <script>
-        // Monthly Revenue and Profit Trend Chart
+        // Monthly Revenue, Profit and Median Ticket Cost Chart
         const revenueCtx = document.getElementById('revenueChart').getContext('2d');
         const monthlyData = {{ insights.monthly_trends | tojson }};
 
-        console.log('Monthly Data:', monthlyData); // Debug log
+        console.log('Monthly Data with Median Ticket Cost:', monthlyData);
 
-        new Chart(revenueCtx, {
-            type: 'line',
-            data: {
-                labels: monthlyData.map(d => d.Month_Label || d.Month_str),
-                datasets: [{
-                    label: 'Monthly Revenue',
-                    data: monthlyData.map(d => d.Revenue),
-                    borderColor: '#667eea',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#667eea',
-                    pointBorderColor: '#667eea',
-                    pointBorderWidth: 2,
-                    pointRadius: 6
-                }, {
-                    label: 'Monthly Profit',
-                    data: monthlyData.map(d => d.Profit),
-                    borderColor: '#28a745',
-                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#28a745',
-                    pointBorderColor: '#28a745',
-                    pointBorderWidth: 2,
-                    pointRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + value.toLocaleString();
+        if (monthlyData && monthlyData.length > 0) {
+            new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: monthlyData.map(d => d.Month_Label || d.Month_str),
+                    datasets: [{
+                        label: 'Monthly Revenue',
+                        data: monthlyData.map(d => d.Revenue),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#667eea',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Monthly Profit',
+                        data: monthlyData.map(d => d.Profit),
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4,
+                        pointBackgroundColor: '#28a745',
+                        pointBorderColor: '#28a745',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Median Ticket Cost',
+                        data: monthlyData.map(d => d.Median_Ticket_Cost || 0),
+                        borderColor: '#ff6b6b',
+                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ff6b6b',
+                        pointBorderColor: '#ff6b6b',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Revenue & Profit ($)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
                             }
                         },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20
-                        }
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        callbacks: {
-                            label: function(context) {
-                                return context.dataset.label + ': $' + context.parsed.y.toLocaleString();
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Median Ticket Cost ($)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
                             }
                         }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label;
+                                    const value = context.parsed.y;
+                                    return label + ': $' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
                     }
-                },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
                 }
-            }
-        });
+            });
+        } else {
+            // Show no data message for revenue chart
+            revenueCtx.font = "16px Arial";
+            revenueCtx.fillStyle = "#7f8c8d";
+            revenueCtx.textAlign = "center";
+            revenueCtx.fillText("No monthly trend data available", revenueCtx.canvas.width/2, revenueCtx.canvas.height/2);
+        }
 
         // Revenue vs Cost Chart
         const revenueVsCostCtx = document.getElementById('revenueVsCostChart').getContext('2d');
 
-        new Chart(revenueVsCostCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Revenue', 'Cost'],
-                datasets: [{
-                    data: [{{ insights.total_sales }}, {{ insights.total_cost }}],
-                    backgroundColor: ['#667eea', '#ff6b6b'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
+        if ({{ insights.total_sales }} > 0 && {{ insights.total_cost }} > 0) {
+            new Chart(revenueVsCostCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Revenue', 'Cost'],
+                    datasets: [{
+                        data: [{{ insights.total_sales }}, {{ insights.total_cost }}],
+                        backgroundColor: ['#667eea', '#ff6b6b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return context.label + ': $' + value.toLocaleString() + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
                     }
                 }
-            }
-        });
+            });
+        } else {
+            // Show no data message for revenue vs cost chart
+            revenueVsCostCtx.font = "16px Arial";
+            revenueVsCostCtx.fillStyle = "#7f8c8d";
+            revenueVsCostCtx.textAlign = "center";
+            revenueVsCostCtx.fillText("No revenue/cost data available", revenueVsCostCtx.canvas.width/2, revenueVsCostCtx.canvas.height/2);
+        }
     </script>
 </body>
 </html>

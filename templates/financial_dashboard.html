@@ -264,6 +264,13 @@
             background: rgba(255,255,255,0.3);
         }
 
+        .no-data {
+            text-align: center;
+            color: #7f8c8d;
+            padding: 40px;
+            font-style: italic;
+        }
+
         @media (max-width: 768px) {
             .nav-menu {
                 display: none;
@@ -292,11 +299,13 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="nav-brand">GrowthScope </div>
+            <div class="nav-brand">GrowthScope</div>
             <div class="nav-menu">
                 <a href="/dashboard/executive" class="nav-item">Executive</a>
                 <a href="/dashboard/financial" class="nav-item active">Financial</a>
                 <a href="/dashboard/growth" class="nav-item">Growth</a>
+                <a href="/dashboard/trends" class="nav-item">Market Trends</a>
+                <a href="/dashboard/chat" class="nav-item">Chat</a>
                 <a href="/" class="nav-upload">Upload New Data</a>
             </div>
         </div>
@@ -439,6 +448,7 @@
         <!-- Product Performance Table -->
         <div class="product-table">
             <h3 class="financial-title">Product Profitability Analysis</h3>
+            {% if insights.product_aggregates and insights.product_aggregates|length > 0 %}
             <table class="table">
                 <thead>
                     <tr>
@@ -467,15 +477,20 @@
                     {% endfor %}
                 </tbody>
             </table>
+            {% else %}
+            <div class="no-data">
+                No product data available for the selected date range.
+            </div>
+            {% endif %}
         </div>
     </div>
 
     <script>
-        // Monthly Profit Trend Chart (Fixed)
+        // Monthly Profit Trend Chart
         const profitCtx = document.getElementById('profitTrendChart').getContext('2d');
         const monthlyData = {{ insights.monthly_trends | tojson }};
 
-        console.log('Monthly Data for Financial Dashboard:', monthlyData); // Debug log
+        console.log('Monthly Data for Financial Dashboard:', monthlyData);
 
         new Chart(profitCtx, {
             type: 'line',
@@ -558,42 +573,50 @@
         const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
         const productData = {{ insights.product_aggregates | tojson }};
 
-        // Sort by profit and take top 5
-        const topProducts = productData
-            .sort((a, b) => b.Profit - a.Profit)
-            .slice(0, 5);
+        if (productData && productData.length > 0) {
+            // Sort by profit and take top 5
+            const topProducts = productData
+                .sort((a, b) => b.Profit - a.Profit)
+                .slice(0, 5);
 
-        new Chart(topProductsCtx, {
-            type: 'bar',
-            data: {
-                labels: topProducts.map(p => p.Product),
-                datasets: [{
-                    label: 'Profit',
-                    data: topProducts.map(p => p.Profit),
-                    backgroundColor: ['#28a745', '#667eea', '#ffc107', '#fd7e14', '#6f42c1'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + value.toLocaleString();
+            new Chart(topProductsCtx, {
+                type: 'bar',
+                data: {
+                    labels: topProducts.map(p => p.Product),
+                    datasets: [{
+                        label: 'Profit',
+                        data: topProducts.map(p => p.Profit),
+                        backgroundColor: ['#28a745', '#667eea', '#ffc107', '#fd7e14', '#6f42c1'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
                             }
                         }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
                     }
                 }
-            }
-        });
+            });
+        } else {
+            // Show no data message
+            topProductsCtx.font = "16px Arial";
+            topProductsCtx.fillStyle = "#7f8c8d";
+            topProductsCtx.textAlign = "center";
+            topProductsCtx.fillText("No product data available", topProductsCtx.canvas.width/2, topProductsCtx.canvas.height/2);
+        }
     </script>
 </body>
 </html>

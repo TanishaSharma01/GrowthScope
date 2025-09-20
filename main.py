@@ -1,6 +1,7 @@
 import os
 import pandas as pd
-from flask import Flask, request, render_template, redirect, url_for, flash, session
+import numpy as np
+from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify
 from werkzeug.utils import secure_filename
 import json
 from datetime import datetime, timedelta
@@ -9,7 +10,7 @@ from google.genai import types
 import tempfile
 
 # Initialize Gemini client with error handling
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+GEMINI_API_KEY = "AIzaSyD27VX_Kjr8wmfw3icVwxtMWTLgGc5yw3Q"
 if not GEMINI_API_KEY:
     print("WARNING: GEMINI_API_KEY not found in environment variables!")
     gemini_client = None
@@ -32,12 +33,30 @@ ALLOWED_EXTENSIONS = {'csv'}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
+def convert_numpy_types(obj):
+    """Convert numpy data types to Python native types for JSON serialization"""
+    if isinstance(obj, dict):
+        return {key: convert_numpy_types(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif pd.isna(obj):
+        return None
+    else:
+        return obj
+
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def filter_data_by_date_range(df, date_filter, start_date=None, end_date=None):
-    """Filter dataframe based on date range selection"""
+    """Filter dataframe based on date range selection - FIXED VERSION"""
     try:
         # Convert Date column to datetime
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
@@ -45,40 +64,54 @@ def filter_data_by_date_range(df, date_filter, start_date=None, end_date=None):
         # Remove rows with invalid dates
         df = df.dropna(subset=['Date'])
 
+        if df.empty:
+            return df
+
         if date_filter == 'all':
             return df
 
-        # Get current date for relative filtering
-        current_date = datetime.now()
+        # Get the max date from the data instead of current date
+        max_data_date = df['Date'].max()
+        min_data_date = df['Date'].min()
+        
+        print(f"Data date range: {min_data_date.strftime('%Y-%m-%d')} to {max_data_date.strftime('%Y-%m-%d')}")
 
         if date_filter == 'last_30_days':
-            start_filter = current_date - timedelta(days=30)
+            start_filter = max_data_date - timedelta(days=30)
             filtered_df = df[df['Date'] >= start_filter]
+            
         elif date_filter == 'last_90_days':
-            start_filter = current_date - timedelta(days=90)
+            start_filter = max_data_date - timedelta(days=90)
             filtered_df = df[df['Date'] >= start_filter]
+            
         elif date_filter == 'current_month':
-            start_filter = current_date.replace(day=1)
+            # Current month relative to the latest data
+            start_filter = max_data_date.replace(day=1)
             filtered_df = df[df['Date'] >= start_filter]
+            
         elif date_filter == 'last_month':
-            # Get first day of current month, then subtract to get last month
-            first_day_current = current_date.replace(day=1)
-            last_month_end = first_day_current - timedelta(days=1)
+            # Last month relative to the latest data
+            current_month_start = max_data_date.replace(day=1)
+            last_month_end = current_month_start - timedelta(days=1)
             last_month_start = last_month_end.replace(day=1)
             filtered_df = df[(df['Date'] >= last_month_start) & (df['Date'] <= last_month_end)]
+            
         elif date_filter == 'current_quarter':
-            # Get current quarter
-            quarter = (current_date.month - 1) // 3 + 1
+            # Current quarter relative to the latest data
+            quarter = (max_data_date.month - 1) // 3 + 1
             quarter_start_month = (quarter - 1) * 3 + 1
-            start_filter = current_date.replace(month=quarter_start_month, day=1)
+            start_filter = max_data_date.replace(month=quarter_start_month, day=1)
             filtered_df = df[df['Date'] >= start_filter]
+            
         elif date_filter == 'custom' and start_date and end_date:
             start_filter = pd.to_datetime(start_date)
             end_filter = pd.to_datetime(end_date)
             filtered_df = df[(df['Date'] >= start_filter) & (df['Date'] <= end_filter)]
+            
         else:
             filtered_df = df
 
+        print(f"Filter '{date_filter}' returned {len(filtered_df)} rows out of {len(df)} total rows")
         return filtered_df
 
     except Exception as e:
@@ -98,11 +131,11 @@ def get_date_range_summary(df, date_filter):
 
     filter_names = {
         'all': 'All Time',
-        'last_30_days': 'Last 30 Days',
-        'last_90_days': 'Last 90 Days',
-        'current_month': 'Current Month',
-        'last_month': 'Last Month',
-        'current_quarter': 'Current Quarter',
+        'last_30_days': 'Last 30 Days (from data)',
+        'last_90_days': 'Last 90 Days (from data)',
+        'current_month': 'Current Month (from data)',
+        'last_month': 'Last Month (from data)',
+        'current_quarter': 'Current Quarter (from data)',
         'custom': 'Custom Range'
     }
 
@@ -119,15 +152,18 @@ def get_date_range_summary(df, date_filter):
 
 
 def compute_monthly_trends(df):
-    """Compute monthly revenue and profit trends"""
+    """Compute monthly revenue, profit trends, and median ticket cost"""
     try:
+        if df.empty:
+            return []
+            
         # Ensure Date column is datetime
         df['Date'] = pd.to_datetime(df['Date'])
 
         # Create Year-Month column for grouping
         df['Year_Month'] = df['Date'].dt.to_period('M')
 
-        # Group by month and aggregate
+        # Group by month and aggregate basic metrics
         monthly_data = df.groupby('Year_Month').agg({
             'Revenue': 'sum',
             'Cost': 'sum',
@@ -136,6 +172,41 @@ def compute_monthly_trends(df):
 
         # Calculate profit
         monthly_data['Profit'] = monthly_data['Revenue'] - monthly_data['Cost']
+
+        # Calculate median ticket cost if Receipt_ID exists
+        if 'Receipt_ID' in df.columns:
+            # Calculate total cost per receipt (ticket) for each month
+            monthly_median_costs = []
+            
+            for year_month in monthly_data['Year_Month']:
+                # Filter data for this month
+                month_data = df[df['Year_Month'] == year_month]
+                
+                # Calculate total cost per receipt (ticket)
+                if not month_data.empty:
+                    receipt_costs = month_data.groupby('Receipt_ID')['Cost'].sum()
+                    median_ticket_cost = receipt_costs.median()
+                    monthly_median_costs.append(median_ticket_cost)
+                else:
+                    monthly_median_costs.append(0)
+            
+            monthly_data['Median_Ticket_Cost'] = monthly_median_costs
+        else:
+            # If no receipt data, use average cost per transaction based on daily averages
+            monthly_median_costs = []
+            
+            for year_month in monthly_data['Year_Month']:
+                month_data = df[df['Year_Month'] == year_month]
+                
+                if not month_data.empty:
+                    # Group by date and calculate daily total costs, then find median
+                    daily_costs = month_data.groupby('Date')['Cost'].sum()
+                    median_daily_cost = daily_costs.median()
+                    monthly_median_costs.append(median_daily_cost)
+                else:
+                    monthly_median_costs.append(0)
+            
+            monthly_data['Median_Ticket_Cost'] = monthly_median_costs
 
         # Convert Period to string for JSON serialization and sorting
         monthly_data['Month_str'] = monthly_data['Year_Month'].astype(str)
@@ -147,7 +218,10 @@ def compute_monthly_trends(df):
         # Format month labels for display (e.g., "Jan 2023")
         monthly_data['Month_Label'] = monthly_data['Year_Month'].dt.strftime('%b %Y')
 
-        return monthly_data[['Month_str', 'Month_Label', 'Revenue', 'Cost', 'Profit', 'Quantity']].to_dict('records')
+        result = monthly_data[['Month_str', 'Month_Label', 'Revenue', 'Cost', 'Profit', 'Quantity', 'Median_Ticket_Cost']].to_dict('records')
+        
+        # Convert numpy types to Python types
+        return convert_numpy_types(result)
 
     except Exception as e:
         print(f"Error computing monthly trends: {str(e)}")
@@ -159,6 +233,7 @@ def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_da
     try:
         # Read CSV file
         df = pd.read_csv(csv_file_path)
+        print(f"Loaded {len(df)} rows from CSV")
 
         # Handle both old and new data formats
         if 'Product_Name' in df.columns:
@@ -193,24 +268,26 @@ def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_da
         df = filter_data_by_date_range(df, date_filter, start_date, end_date)
 
         if df.empty:
-            return None, "No data available for the selected date range"
+            return None, f"No data available for the selected date range '{date_filter}'. Try selecting 'All Time' or a different date range."
+
+        print(f"After filtering: {len(df)} rows remaining")
 
         # Get date range summary
         date_summary = get_date_range_summary(df, date_filter)
 
         # Calculate basic insights
-        total_sales = df['Revenue'].sum()
-        total_cost = df['Cost'].sum()
+        total_sales = float(df['Revenue'].sum())
+        total_cost = float(df['Cost'].sum())
         total_profit = total_sales - total_cost
         profit_margin = (total_profit / total_sales * 100) if total_sales > 0 else 0
-        total_quantity = df['Quantity'].sum()
+        total_quantity = int(df['Quantity'].sum())
         avg_revenue_per_item = total_sales / total_quantity if total_quantity > 0 else 0
 
         # Find top-selling product by revenue
         if not df.empty:
             product_revenue = df.groupby('Product')['Revenue'].sum()
             top_selling_product = product_revenue.idxmax()
-            top_product_revenue = product_revenue.max()
+            top_product_revenue = float(product_revenue.max())
         else:
             top_selling_product = "N/A"
             top_product_revenue = 0
@@ -240,13 +317,13 @@ def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_da
             receipt_agg['Items_Per_Receipt'] = df.groupby('Receipt_ID').size().values
 
             transaction_metrics = {
-                'total_receipts': len(receipt_agg),
-                'avg_receipt_value': receipt_agg['Revenue'].mean(),
-                'avg_items_per_receipt': receipt_agg['Items_Per_Receipt'].mean(),
-                'avg_receipt_profit': receipt_agg['Profit'].mean(),
-                'largest_receipt': receipt_agg['Revenue'].max(),
-                'receipt_profit_margin': (receipt_agg['Profit'].sum() / receipt_agg['Revenue'].sum() * 100) if
-                receipt_agg['Revenue'].sum() > 0 else 0
+                'total_receipts': int(len(receipt_agg)),
+                'avg_receipt_value': float(receipt_agg['Revenue'].mean()),
+                'avg_items_per_receipt': float(receipt_agg['Items_Per_Receipt'].mean()),
+                'avg_receipt_profit': float(receipt_agg['Profit'].mean()),
+                'largest_receipt': float(receipt_agg['Revenue'].max()),
+                'receipt_profit_margin': float((receipt_agg['Profit'].sum() / receipt_agg['Revenue'].sum() * 100) if
+                receipt_agg['Revenue'].sum() > 0 else 0)
             }
 
         # Brand and category summaries
@@ -262,10 +339,10 @@ def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_da
             brand_data['Profit'] = brand_data['Revenue'] - brand_data['Cost']
             brand_data['Margin'] = ((brand_data['Profit'] / brand_data['Revenue']) * 100).fillna(0)
             brand_summary = {row['Brand']: {
-                'Revenue': round(row['Revenue'], 2),
-                'Cost': round(row['Cost'], 2),
-                'Profit': round(row['Profit'], 2),
-                'Margin': round(row['Margin'], 2),
+                'Revenue': float(row['Revenue']),
+                'Cost': float(row['Cost']),
+                'Profit': float(row['Profit']),
+                'Margin': float(row['Margin']),
                 'Quantity': int(row['Quantity'])
             } for _, row in brand_data.iterrows()}
 
@@ -278,10 +355,10 @@ def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_da
             category_data['Profit'] = category_data['Revenue'] - category_data['Cost']
             category_data['Margin'] = ((category_data['Profit'] / category_data['Revenue']) * 100).fillna(0)
             category_summary = {row['Category']: {
-                'Revenue': round(row['Revenue'], 2),
-                'Cost': round(row['Cost'], 2),
-                'Profit': round(row['Profit'], 2),
-                'Margin': round(row['Margin'], 2),
+                'Revenue': float(row['Revenue']),
+                'Cost': float(row['Cost']),
+                'Profit': float(row['Profit']),
+                'Margin': float(row['Margin']),
                 'Quantity': int(row['Quantity'])
             } for _, row in category_data.iterrows()}
 
@@ -305,16 +382,134 @@ def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_da
             # Transaction metrics
             'transaction_metrics': transaction_metrics,
 
-            # Product analysis
-            'product_aggregates': product_agg.to_dict('records') if not product_agg.empty else [],
+            # Product analysis - Convert to JSON serializable format
+            'product_aggregates': convert_numpy_types(product_agg.to_dict('records')) if not product_agg.empty else [],
             'brand_summary': brand_summary,
             'category_summary': category_summary,
+
+            # Store raw dataframe for chat functionality
+            'raw_data': df
         }
 
         return insights, None
 
     except Exception as e:
+        print(f"Error in analyze_sales_data: {e}")
         return None, f"Error processing CSV file: {str(e)}"
+
+
+def generate_data_summary_for_ai(insights):
+    """Generate a comprehensive data summary for AI analysis"""
+    if not insights:
+        return "No data available for analysis."
+    
+    summary = f"""
+Business Data Summary:
+- Total Revenue: ${insights['total_sales']:,.2f}
+- Total Cost: ${insights['total_cost']:,.2f}
+- Total Profit: ${insights['total_profit']:,.2f}
+- Profit Margin: {insights['profit_margin']:.1f}%
+- Total Quantity Sold: {insights['total_quantity']}
+- Average Revenue per Item: ${insights['avg_revenue_per_item']:.2f}
+- Top Selling Product: {insights['top_selling_product']} (${insights['top_product_revenue']:,.2f})
+
+Date Range: {insights['date_summary']['period_name']} 
+({insights['date_summary']['start_date']} to {insights['date_summary']['end_date']})
+- Total Days: {insights['date_summary']['total_days']}
+- Data Points: {insights['date_summary']['data_points']}
+
+Product Portfolio:
+- Total Products: {len(insights['product_aggregates'])}
+"""
+
+    # Add transaction metrics if available
+    if insights.get('transaction_metrics'):
+        tm = insights['transaction_metrics']
+        summary += f"""
+Transaction Analytics:
+- Total Transactions: {tm['total_receipts']}
+- Average Transaction Value: ${tm['avg_receipt_value']:.2f}
+- Average Items per Transaction: {tm['avg_items_per_receipt']:.1f}
+- Largest Transaction: ${tm['largest_receipt']:.2f}
+- Transaction Profit Margin: {tm['receipt_profit_margin']:.1f}%
+"""
+
+    # Add brand performance
+    if insights.get('brand_summary') and len(insights['brand_summary']) > 1:
+        summary += f"\nBrand Performance ({len(insights['brand_summary'])} brands):\n"
+        for brand, data in list(insights['brand_summary'].items())[:5]:
+            if brand != 'Unknown':
+                summary += f"- {brand}: ${data['Revenue']:,.0f} revenue, {data['Margin']:.1f}% margin\n"
+
+    # Add category performance
+    if insights.get('category_summary') and len(insights['category_summary']) > 1:
+        summary += f"\nCategory Performance ({len(insights['category_summary'])} categories):\n"
+        for category, data in list(insights['category_summary'].items())[:5]:
+            if category != 'Unknown':
+                summary += f"- {category}: ${data['Revenue']:,.0f} revenue, {data['Margin']:.1f}% margin\n"
+
+    # Add top products
+    if insights.get('product_aggregates'):
+        summary += f"\nTop 5 Products by Profit:\n"
+        sorted_products = sorted(insights['product_aggregates'], key=lambda x: x['Profit'], reverse=True)
+        for i, product in enumerate(sorted_products[:5], 1):
+            summary += f"{i}. {product['Product']}: ${product['Profit']:,.0f} profit, {product['Margin_Pct']:.1f}% margin\n"
+
+    # Add monthly trends if available
+    if insights.get('monthly_trends'):
+        summary += f"\nMonthly Trends ({len(insights['monthly_trends'])} months):\n"
+        for trend in insights['monthly_trends'][-3:]:  # Last 3 months
+            summary += f"- {trend['Month_Label']}: ${trend['Revenue']:,.0f} revenue, ${trend['Profit']:,.0f} profit\n"
+
+    return summary
+
+
+def ask_ai_about_data(question, insights):
+    """Use Gemini AI to answer questions about the business data"""
+    if not gemini_client:
+        return "AI service is not available. Please check your API configuration."
+    
+    try:
+        # Generate comprehensive data summary
+        data_summary = generate_data_summary_for_ai(insights)
+        
+        # Create the prompt for Gemini
+        prompt = f"""
+You are a business intelligence analyst helping a business owner understand their sales data. 
+You have access to comprehensive business data and should provide actionable insights.
+
+Business Data:
+{data_summary}
+
+User Question: {question}
+
+Please provide a helpful, specific answer based on the data above. Focus on:
+1. Direct answers to the question asked
+2. Relevant insights from the data
+3. Actionable recommendations when appropriate
+4. Specific numbers and metrics to support your points
+
+Keep your response conversational but professional, and aim for 2-4 paragraphs maximum.
+"""
+        
+        # Call Gemini API
+        response = gemini_client.models.generate_content(
+            model='gemini-1.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.7,
+                max_output_tokens=1000,
+            )
+        )
+        
+        if response and response.text:
+            return response.text.strip()
+        else:
+            return "I'm sorry, I couldn't generate a response. Please try rephrasing your question."
+            
+    except Exception as e:
+        print(f"Error calling Gemini API: {e}")
+        return f"I encountered an error while processing your question: {str(e)}"
 
 
 def save_temp_file(file):
@@ -389,7 +584,10 @@ def executive_dashboard():
             flash(f'Error analyzing data: {error}')
             return redirect(url_for('index'))
 
-        return render_template('executive_dashboard.html', insights=insights)
+        # Remove raw_data before passing to template (too large for template)
+        template_insights = {k: v for k, v in insights.items() if k != 'raw_data'}
+        
+        return render_template('executive_dashboard.html', insights=template_insights)
 
     except Exception as e:
         flash(f'Error loading dashboard: {str(e)}')
@@ -414,7 +612,10 @@ def financial_dashboard():
             flash(f'Error analyzing data: {error}')
             return redirect(url_for('index'))
 
-        return render_template('financial_dashboard.html', insights=insights)
+        # Remove raw_data before passing to template
+        template_insights = {k: v for k, v in insights.items() if k != 'raw_data'}
+        
+        return render_template('financial_dashboard.html', insights=template_insights)
 
     except Exception as e:
         flash(f'Error loading dashboard: {str(e)}')
@@ -439,12 +640,87 @@ def growth_dashboard():
             flash(f'Error analyzing data: {error}')
             return redirect(url_for('index'))
 
-        return render_template('growth_dashboard.html', insights=insights)
+        # Remove raw_data before passing to template
+        template_insights = {k: v for k, v in insights.items() if k != 'raw_data'}
+        
+        return render_template('growth_dashboard.html', insights=template_insights)
 
     except Exception as e:
         flash(f'Error loading dashboard: {str(e)}')
         return redirect(url_for('index'))
 
+
+@app.route('/dashboard/chat')
+def chat_dashboard():
+    if 'csv_file_path' not in session:
+        flash('Please upload a CSV file first')
+        return redirect(url_for('index'))
+
+    try:
+        insights, error = analyze_sales_data(
+            session['csv_file_path'],
+            session.get('date_filter', 'all'),
+            session.get('start_date'),
+            session.get('end_date')
+        )
+
+        if error:
+            flash(f'Error analyzing data: {error}')
+            return redirect(url_for('index'))
+
+        # Convert insights to JSON-serializable format for session storage
+        session_insights = convert_numpy_types({k: v for k, v in insights.items() if k != 'raw_data'})
+        session['current_insights'] = session_insights
+        
+        # Remove raw_data before passing to template
+        template_insights = {k: v for k, v in insights.items() if k != 'raw_data'}
+        
+        return render_template('chat_dashboard.html', insights=template_insights)
+
+    except Exception as e:
+        flash(f'Error loading dashboard: {str(e)}')
+        return redirect(url_for('index'))
+
+
+@app.route('/dashboard/chat/ask', methods=['POST'])
+def chat_ask():
+    """Handle chat questions via AJAX"""
+    if 'current_insights' not in session:
+        return jsonify({'success': False, 'error': 'No data available for analysis'})
+    
+    try:
+        data = request.get_json()
+        question = data.get('question', '').strip()
+        
+        if not question:
+            return jsonify({'success': False, 'error': 'Please provide a question'})
+        
+        if len(question) > 500:
+            return jsonify({'success': False, 'error': 'Question is too long. Please keep it under 500 characters.'})
+        
+        # Get insights from session
+        insights = session['current_insights']
+        
+        # Generate AI response
+        answer = ask_ai_about_data(question, insights)
+        
+        return jsonify({'success': True, 'answer': answer})
+        
+    except Exception as e:
+        print(f"Error in chat_ask: {e}")
+        return jsonify({'success': False, 'error': 'An error occurred while processing your question'})
+
+@app.route('/dashboard/trends')
+def trends_dashboard():
+    """Static trends dashboard with dummy regional market data"""
+    try:
+        # This is a static dashboard that doesn't require CSV data
+        # But we'll check if user has uploaded data to show consistent navigation
+        return render_template('trends_dashboard.html')
+    
+    except Exception as e:
+        flash(f'Error loading trends dashboard: {str(e)}')
+        return redirect(url_for('index'))
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
