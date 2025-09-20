@@ -1,20 +1,29 @@
 import os
 import pandas as pd
-from flask import Flask, request, render_template, redirect, url_for, flash
+import numpy as np
+from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify
 from werkzeug.utils import secure_filename
 import json
+from datetime import datetime, timedelta
 from google import genai
 from google.genai import types
+import tempfile
 
-# IMPORTANT: KEEP THIS COMMENT
-# Follow these instructions when using this blueprint:
-# - Note that the newest Gemini model series is "gemini-2.5-flash" or gemini-2.5-pro"
-#   - do not change this unless explicitly requested by the user
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+# Initialize Gemini client with error handling
+GEMINI_API_KEY = "AIzaSyD27VX_Kjr8wmfw3icVwxtMWTLgGc5yw3Q"
+if not GEMINI_API_KEY:
+    print("WARNING: GEMINI_API_KEY not found in environment variables!")
+    gemini_client = None
+else:
+    try:
+        gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+        print("✅ Gemini API client initialized successfully")
+    except Exception as e:
+        print(f"❌ Error initializing Gemini client: {e}")
+        gemini_client = None
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SESSION_SECRET', 'fallback_secret_key')
+app.secret_key = os.environ.get('SESSION_SECRET', 'fallback_secret_key_for_development')
 
 # Configure upload settings
 UPLOAD_FOLDER = 'uploads'
@@ -23,180 +32,305 @@ ALLOWED_EXTENSIONS = {'csv'}
 # Create upload directory if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+
+def convert_numpy_types(obj):
+    """Convert numpy data types to Python native types for JSON serialization"""
+    if isinstance(obj, dict):
+        return {key: convert_numpy_types(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif pd.isna(obj):
+        return None
+    else:
+        return obj
+
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def compute_aggregates(df):
-    """Compute per-product aggregates with profit analysis"""
-    product_agg = df.groupby('Product').agg({
-        'Revenue': 'sum',
-        'Cost': 'sum',
-        'Quantity': 'sum'
-    }).reset_index()
-    
-    product_agg['Profit'] = product_agg['Revenue'] - product_agg['Cost']
-    product_agg['Margin_Pct'] = (product_agg['Profit'] / product_agg['Revenue'] * 100).fillna(0)
-    product_agg['Unit_Profit'] = (product_agg['Profit'] / product_agg['Quantity']).fillna(0)
-    
-    # Add brand and category info
-    if 'Brand' in df.columns and 'Category' in df.columns:
-        brand_category = df.groupby('Product')[['Brand', 'Category']].first()
-        product_agg = product_agg.merge(brand_category, on='Product')
-    
-    return product_agg
 
-def build_rankings(df):
-    """Build top product rankings by category and brand"""
-    rankings = {}
-    
-    if 'Category' in df.columns:
-        # Top 3 products by category (by profit)
-        category_products = df.groupby(['Category', 'Product']).agg({
-            'Revenue': 'sum',
-            'Cost': 'sum'
-        }).reset_index()
-        category_products['Profit'] = category_products['Revenue'] - category_products['Cost']
-        
-        rankings['by_category'] = {}
-        for category in category_products['Category'].unique():
-            cat_data = category_products[category_products['Category'] == category]
-            top_products = cat_data.nlargest(3, 'Profit')[['Product', 'Profit']].to_dict('records')
-            rankings['by_category'][category] = top_products
-    
-    if 'Brand' in df.columns:
-        # Top 3 products by brand (by profit)
-        brand_products = df.groupby(['Brand', 'Product']).agg({
-            'Revenue': 'sum',
-            'Cost': 'sum'
-        }).reset_index()
-        brand_products['Profit'] = brand_products['Revenue'] - brand_products['Cost']
-        
-        rankings['by_brand'] = {}
-        for brand in brand_products['Brand'].unique():
-            brand_data = brand_products[brand_products['Brand'] == brand]
-            top_products = brand_data.nlargest(3, 'Profit')[['Product', 'Profit']].to_dict('records')
-            rankings['by_brand'][brand] = top_products
-    
-    return rankings
+def filter_data_by_date_range(df, date_filter, start_date=None, end_date=None):
+    """Filter dataframe based on date range selection - FIXED VERSION"""
+    try:
+        # Convert Date column to datetime
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
 
-def compute_profit_tiers(product_agg):
-    """Categorize products into profit tiers"""
-    tiers = {'High': [], 'Medium': [], 'Low': [], 'Negative': []}
-    
-    for _, row in product_agg.iterrows():
-        margin = row['Margin_Pct']
-        product_info = {
-            'product': row['Product'],
-            'margin': round(margin, 2),
-            'profit': round(row['Profit'], 2)
-        }
-        
-        if margin >= 30:
-            tiers['High'].append(product_info)
-        elif margin >= 15:
-            tiers['Medium'].append(product_info)
-        elif margin >= 0:
-            tiers['Low'].append(product_info)
-        else:
-            tiers['Negative'].append(product_info)
-    
-    # Sort by profit within each tier
-    for tier in tiers.values():
-        tier.sort(key=lambda x: x['profit'], reverse=True)
-    
-    return tiers
+        # Remove rows with invalid dates
+        df = df.dropna(subset=['Date'])
 
-def compute_reorders(df, defaults=None):
-    """Compute reorder recommendations based on inventory data"""
-    if defaults is None:
-        defaults = {'LeadTimeDays': 7, 'SafetyStock': 15}
-    
-    recommendations = []
-    
-    # Check if inventory columns exist
-    inventory_cols = ['StockOnHand', 'LeadTimeDays', 'SafetyStock']
-    has_inventory = all(col in df.columns for col in inventory_cols)
-    
-    if not has_inventory:
-        return recommendations, "Inventory data not available"
-    
-    # Calculate average daily sales per product
-    product_sales = df.groupby('Product').agg({
-        'Quantity': 'sum',
-        'StockOnHand': 'first',
-        'LeadTimeDays': 'first',
-        'SafetyStock': 'first'
-    }).reset_index()
-    
-    # Assume data spans multiple days for ADS calculation
-    days_in_data = df['Date'].nunique()
-    product_sales['ADS'] = product_sales['Quantity'] / max(days_in_data, 1)
-    
-    for _, row in product_sales.iterrows():
-        ads = row['ADS']
-        stock = row['StockOnHand']
-        lead_time = row['LeadTimeDays']
-        safety_stock = row['SafetyStock']
+        if df.empty:
+            return df
+
+        if date_filter == 'all':
+            return df
+
+        # Get the max date from the data instead of current date
+        max_data_date = df['Date'].max()
+        min_data_date = df['Date'].min()
         
-        # Reorder point calculation
-        reorder_point = ads * lead_time + safety_stock
-        
-        if stock <= reorder_point:
-            order_qty = max(0, ads * (lead_time + 7) - stock)  # 7 days additional buffer
+        print(f"Data date range: {min_data_date.strftime('%Y-%m-%d')} to {max_data_date.strftime('%Y-%m-%d')}")
+
+        if date_filter == 'last_30_days':
+            start_filter = max_data_date - timedelta(days=30)
+            filtered_df = df[df['Date'] >= start_filter]
             
-            recommendations.append({
-                'product': row['Product'],
-                'current_stock': int(stock),
-                'reorder_point': int(reorder_point),
-                'recommended_order': int(order_qty),
-                'ads': round(ads, 2),
-                'reason': f"Stock ({int(stock)}) below reorder point ({int(reorder_point)})"
-            })
-    
-    return recommendations, None
+        elif date_filter == 'last_90_days':
+            start_filter = max_data_date - timedelta(days=90)
+            filtered_df = df[df['Date'] >= start_filter]
+            
+        elif date_filter == 'current_month':
+            # Current month relative to the latest data
+            start_filter = max_data_date.replace(day=1)
+            filtered_df = df[df['Date'] >= start_filter]
+            
+        elif date_filter == 'last_month':
+            # Last month relative to the latest data
+            current_month_start = max_data_date.replace(day=1)
+            last_month_end = current_month_start - timedelta(days=1)
+            last_month_start = last_month_end.replace(day=1)
+            filtered_df = df[(df['Date'] >= last_month_start) & (df['Date'] <= last_month_end)]
+            
+        elif date_filter == 'current_quarter':
+            # Current quarter relative to the latest data
+            quarter = (max_data_date.month - 1) // 3 + 1
+            quarter_start_month = (quarter - 1) * 3 + 1
+            start_filter = max_data_date.replace(month=quarter_start_month, day=1)
+            filtered_df = df[df['Date'] >= start_filter]
+            
+        elif date_filter == 'custom' and start_date and end_date:
+            start_filter = pd.to_datetime(start_date)
+            end_filter = pd.to_datetime(end_date)
+            filtered_df = df[(df['Date'] >= start_filter) & (df['Date'] <= end_filter)]
+            
+        else:
+            filtered_df = df
 
-def analyze_sales_data(csv_file_path):
-    """Process CSV file and calculate business insights"""
+        print(f"Filter '{date_filter}' returned {len(filtered_df)} rows out of {len(df)} total rows")
+        return filtered_df
+
+    except Exception as e:
+        print(f"Error filtering data: {e}")
+        return df
+
+
+def get_date_range_summary(df, date_filter):
+    """Get summary of the date range being analyzed"""
+    if df.empty:
+        return "No data available"
+
+    min_date = df['Date'].min().strftime('%Y-%m-%d')
+    max_date = df['Date'].max().strftime('%Y-%m-%d')
+    total_days = (df['Date'].max() - df['Date'].min()).days + 1
+    unique_dates = df['Date'].nunique()
+
+    filter_names = {
+        'all': 'All Time',
+        'last_30_days': 'Last 30 Days (from data)',
+        'last_90_days': 'Last 90 Days (from data)',
+        'current_month': 'Current Month (from data)',
+        'last_month': 'Last Month (from data)',
+        'current_quarter': 'Current Quarter (from data)',
+        'custom': 'Custom Range'
+    }
+
+    filter_name = filter_names.get(date_filter, 'Selected Period')
+
+    return {
+        'period_name': filter_name,
+        'start_date': min_date,
+        'end_date': max_date,
+        'total_days': total_days,
+        'data_points': len(df),
+        'unique_dates': unique_dates
+    }
+
+
+def compute_monthly_trends(df):
+    """Compute monthly revenue, profit trends, and median ticket cost"""
+    try:
+        if df.empty:
+            return []
+            
+        # Ensure Date column is datetime
+        df['Date'] = pd.to_datetime(df['Date'])
+
+        # Create Year-Month column for grouping
+        df['Year_Month'] = df['Date'].dt.to_period('M')
+
+        # Group by month and aggregate basic metrics
+        monthly_data = df.groupby('Year_Month').agg({
+            'Revenue': 'sum',
+            'Cost': 'sum',
+            'Quantity': 'sum'
+        }).reset_index()
+
+        # Calculate profit
+        monthly_data['Profit'] = monthly_data['Revenue'] - monthly_data['Cost']
+
+        # Calculate median ticket cost if Receipt_ID exists
+        if 'Receipt_ID' in df.columns:
+            # Calculate total cost per receipt (ticket) for each month
+            monthly_median_costs = []
+            
+            for year_month in monthly_data['Year_Month']:
+                # Filter data for this month
+                month_data = df[df['Year_Month'] == year_month]
+                
+                # Calculate total cost per receipt (ticket)
+                if not month_data.empty:
+                    receipt_costs = month_data.groupby('Receipt_ID')['Cost'].sum()
+                    median_ticket_cost = receipt_costs.median()
+                    monthly_median_costs.append(median_ticket_cost)
+                else:
+                    monthly_median_costs.append(0)
+            
+            monthly_data['Median_Ticket_Cost'] = monthly_median_costs
+        else:
+            # If no receipt data, use average cost per transaction based on daily averages
+            monthly_median_costs = []
+            
+            for year_month in monthly_data['Year_Month']:
+                month_data = df[df['Year_Month'] == year_month]
+                
+                if not month_data.empty:
+                    # Group by date and calculate daily total costs, then find median
+                    daily_costs = month_data.groupby('Date')['Cost'].sum()
+                    median_daily_cost = daily_costs.median()
+                    monthly_median_costs.append(median_daily_cost)
+                else:
+                    monthly_median_costs.append(0)
+            
+            monthly_data['Median_Ticket_Cost'] = monthly_median_costs
+
+        # Convert Period to string for JSON serialization and sorting
+        monthly_data['Month_str'] = monthly_data['Year_Month'].astype(str)
+        monthly_data['Sort_Date'] = monthly_data['Year_Month'].dt.start_time
+
+        # Sort by date
+        monthly_data = monthly_data.sort_values('Sort_Date')
+
+        # Format month labels for display (e.g., "Jan 2023")
+        monthly_data['Month_Label'] = monthly_data['Year_Month'].dt.strftime('%b %Y')
+
+        result = monthly_data[['Month_str', 'Month_Label', 'Revenue', 'Cost', 'Profit', 'Quantity', 'Median_Ticket_Cost']].to_dict('records')
+        
+        # Convert numpy types to Python types
+        return convert_numpy_types(result)
+
+    except Exception as e:
+        print(f"Error computing monthly trends: {str(e)}")
+        return []
+
+
+def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_date=None):
+    """Process CSV file and calculate business insights with date filtering"""
     try:
         # Read CSV file
         df = pd.read_csv(csv_file_path)
-        
-        # Ensure required columns exist
-        required_columns = ['Date', 'Product', 'Revenue', 'Cost', 'Quantity', 'Brand', 'Category']
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        if missing_columns:
-            return None, f"Missing required columns: {', '.join(missing_columns)}"
-        
-        # Optional inventory columns
-        inventory_defaults = {'LeadTimeDays': 7, 'SafetyStock': 15}
-        for col, default in inventory_defaults.items():
-            if col not in df.columns:
-                df[col] = default
-        
+        print(f"Loaded {len(df)} rows from CSV")
+
+        # Handle both old and new data formats
+        if 'Product_Name' in df.columns:
+            # New transaction-based format
+            required_columns = ['Date', 'Receipt_ID', 'Product_Name', 'Brand_Name', 'Category', 'Quantity',
+                                'Selling_Price', 'Cost_Price']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                return None, f"Missing required columns: {', '.join(missing_columns)}"
+
+            # Map new column names to old format
+            df['Product'] = df['Product_Name']
+            df['Brand'] = df['Brand_Name']
+            # Calculate total revenue and cost for each line item
+            df['Revenue'] = df['Selling_Price'] * df['Quantity']
+            df['Cost'] = df['Cost_Price'] * df['Quantity']
+
+        else:
+            # Old format
+            required_columns = ['Date', 'Product', 'Revenue', 'Cost', 'Quantity']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                return None, f"Missing required columns: {', '.join(missing_columns)}"
+
+            # Optional columns with defaults for old format
+            if 'Brand' not in df.columns:
+                df['Brand'] = 'Unknown'
+            if 'Category' not in df.columns:
+                df['Category'] = 'Unknown'
+
+        # Apply date filtering
+        df = filter_data_by_date_range(df, date_filter, start_date, end_date)
+
+        if df.empty:
+            return None, f"No data available for the selected date range '{date_filter}'. Try selecting 'All Time' or a different date range."
+
+        print(f"After filtering: {len(df)} rows remaining")
+
+        # Get date range summary
+        date_summary = get_date_range_summary(df, date_filter)
+
         # Calculate basic insights
-        total_sales = df['Revenue'].sum()
-        total_cost = df['Cost'].sum()
+        total_sales = float(df['Revenue'].sum())
+        total_cost = float(df['Cost'].sum())
         total_profit = total_sales - total_cost
         profit_margin = (total_profit / total_sales * 100) if total_sales > 0 else 0
-        total_quantity = df['Quantity'].sum()
+        total_quantity = int(df['Quantity'].sum())
         avg_revenue_per_item = total_sales / total_quantity if total_quantity > 0 else 0
-        
+
         # Find top-selling product by revenue
-        product_revenue = df.groupby('Product')['Revenue'].sum()
-        top_selling_product = product_revenue.idxmax()
-        top_product_revenue = product_revenue.max()
-        
-        # Enhanced analytics using helper functions
-        product_aggregates = compute_aggregates(df)
-        rankings = build_rankings(df)
-        profit_tiers = compute_profit_tiers(product_aggregates)
-        reorder_recommendations, reorder_error = compute_reorders(df)
-        
+        if not df.empty:
+            product_revenue = df.groupby('Product')['Revenue'].sum()
+            top_selling_product = product_revenue.idxmax()
+            top_product_revenue = float(product_revenue.max())
+        else:
+            top_selling_product = "N/A"
+            top_product_revenue = 0
+
+        # Monthly trends (replacing daily trends)
+        monthly_trends = compute_monthly_trends(df)
+
+        # Product performance
+        product_agg = df.groupby('Product').agg({
+            'Revenue': 'sum',
+            'Cost': 'sum',
+            'Quantity': 'sum'
+        }).reset_index()
+        product_agg['Profit'] = product_agg['Revenue'] - product_agg['Cost']
+        product_agg['Margin_Pct'] = (product_agg['Profit'] / product_agg['Revenue'] * 100).fillna(0)
+
+        # Transaction-level analytics (if Receipt_ID exists)
+        transaction_metrics = {}
+        if 'Receipt_ID' in df.columns:
+            # Calculate per-receipt metrics
+            receipt_agg = df.groupby('Receipt_ID').agg({
+                'Revenue': 'sum',
+                'Cost': 'sum',
+                'Quantity': 'sum'
+            }).reset_index()
+            receipt_agg['Profit'] = receipt_agg['Revenue'] - receipt_agg['Cost']
+            receipt_agg['Items_Per_Receipt'] = df.groupby('Receipt_ID').size().values
+
+            transaction_metrics = {
+                'total_receipts': int(len(receipt_agg)),
+                'avg_receipt_value': float(receipt_agg['Revenue'].mean()),
+                'avg_items_per_receipt': float(receipt_agg['Items_Per_Receipt'].mean()),
+                'avg_receipt_profit': float(receipt_agg['Profit'].mean()),
+                'largest_receipt': float(receipt_agg['Revenue'].max()),
+                'receipt_profit_margin': float((receipt_agg['Profit'].sum() / receipt_agg['Revenue'].sum() * 100) if
+                receipt_agg['Revenue'].sum() > 0 else 0)
+            }
+
         # Brand and category summaries
         brand_summary = {}
         category_summary = {}
-        
-        if 'Brand' in df.columns:
+
+        if 'Brand' in df.columns and not df.empty:
             brand_data = df.groupby('Brand').agg({
                 'Revenue': 'sum',
                 'Cost': 'sum',
@@ -205,14 +339,14 @@ def analyze_sales_data(csv_file_path):
             brand_data['Profit'] = brand_data['Revenue'] - brand_data['Cost']
             brand_data['Margin'] = ((brand_data['Profit'] / brand_data['Revenue']) * 100).fillna(0)
             brand_summary = {row['Brand']: {
-                'Revenue': round(row['Revenue'], 2),
-                'Cost': round(row['Cost'], 2),
-                'Profit': round(row['Profit'], 2),
-                'Margin': round(row['Margin'], 2),
+                'Revenue': float(row['Revenue']),
+                'Cost': float(row['Cost']),
+                'Profit': float(row['Profit']),
+                'Margin': float(row['Margin']),
                 'Quantity': int(row['Quantity'])
             } for _, row in brand_data.iterrows()}
-        
-        if 'Category' in df.columns:
+
+        if 'Category' in df.columns and not df.empty:
             category_data = df.groupby('Category').agg({
                 'Revenue': 'sum',
                 'Cost': 'sum',
@@ -221,13 +355,13 @@ def analyze_sales_data(csv_file_path):
             category_data['Profit'] = category_data['Revenue'] - category_data['Cost']
             category_data['Margin'] = ((category_data['Profit'] / category_data['Revenue']) * 100).fillna(0)
             category_summary = {row['Category']: {
-                'Revenue': round(row['Revenue'], 2),
-                'Cost': round(row['Cost'], 2),
-                'Profit': round(row['Profit'], 2),
-                'Margin': round(row['Margin'], 2),
+                'Revenue': float(row['Revenue']),
+                'Cost': float(row['Cost']),
+                'Profit': float(row['Profit']),
+                'Margin': float(row['Margin']),
                 'Quantity': int(row['Quantity'])
             } for _, row in category_data.iterrows()}
-        
+
         insights = {
             # Basic metrics
             'total_sales': total_sales,
@@ -238,67 +372,153 @@ def analyze_sales_data(csv_file_path):
             'top_product_revenue': top_product_revenue,
             'total_quantity': total_quantity,
             'avg_revenue_per_item': round(avg_revenue_per_item, 2),
-            
-            # Enhanced analytics
-            'rankings': rankings,
-            'profit_tiers': profit_tiers,
+
+            # Date filtering info
+            'date_summary': date_summary,
+
+            # Time series data - NOW MONTHLY
+            'monthly_trends': monthly_trends,
+
+            # Transaction metrics
+            'transaction_metrics': transaction_metrics,
+
+            # Product analysis - Convert to JSON serializable format
+            'product_aggregates': convert_numpy_types(product_agg.to_dict('records')) if not product_agg.empty else [],
             'brand_summary': brand_summary,
             'category_summary': category_summary,
-            'reorder_recommendations': reorder_recommendations,
-            'reorder_error': reorder_error,
-            'product_aggregates': product_aggregates.to_dict('records')
+
+            # Store raw dataframe for chat functionality
+            'raw_data': df
         }
-        
+
         return insights, None
-        
+
     except Exception as e:
+        print(f"Error in analyze_sales_data: {e}")
         return None, f"Error processing CSV file: {str(e)}"
 
-def generate_ai_strategies(insights, business_goal):
-    """Generate AI-powered business strategies using Google Gemini"""
+
+def generate_data_summary_for_ai(insights):
+    """Generate a comprehensive data summary for AI analysis"""
+    if not insights:
+        return "No data available for analysis."
+    
+    summary = f"""
+Business Data Summary:
+- Total Revenue: ${insights['total_sales']:,.2f}
+- Total Cost: ${insights['total_cost']:,.2f}
+- Total Profit: ${insights['total_profit']:,.2f}
+- Profit Margin: {insights['profit_margin']:.1f}%
+- Total Quantity Sold: {insights['total_quantity']}
+- Average Revenue per Item: ${insights['avg_revenue_per_item']:.2f}
+- Top Selling Product: {insights['top_selling_product']} (${insights['top_product_revenue']:,.2f})
+
+Date Range: {insights['date_summary']['period_name']} 
+({insights['date_summary']['start_date']} to {insights['date_summary']['end_date']})
+- Total Days: {insights['date_summary']['total_days']}
+- Data Points: {insights['date_summary']['data_points']}
+
+Product Portfolio:
+- Total Products: {len(insights['product_aggregates'])}
+"""
+
+    # Add transaction metrics if available
+    if insights.get('transaction_metrics'):
+        tm = insights['transaction_metrics']
+        summary += f"""
+Transaction Analytics:
+- Total Transactions: {tm['total_receipts']}
+- Average Transaction Value: ${tm['avg_receipt_value']:.2f}
+- Average Items per Transaction: {tm['avg_items_per_receipt']:.1f}
+- Largest Transaction: ${tm['largest_receipt']:.2f}
+- Transaction Profit Margin: {tm['receipt_profit_margin']:.1f}%
+"""
+
+    # Add brand performance
+    if insights.get('brand_summary') and len(insights['brand_summary']) > 1:
+        summary += f"\nBrand Performance ({len(insights['brand_summary'])} brands):\n"
+        for brand, data in list(insights['brand_summary'].items())[:5]:
+            if brand != 'Unknown':
+                summary += f"- {brand}: ${data['Revenue']:,.0f} revenue, {data['Margin']:.1f}% margin\n"
+
+    # Add category performance
+    if insights.get('category_summary') and len(insights['category_summary']) > 1:
+        summary += f"\nCategory Performance ({len(insights['category_summary'])} categories):\n"
+        for category, data in list(insights['category_summary'].items())[:5]:
+            if category != 'Unknown':
+                summary += f"- {category}: ${data['Revenue']:,.0f} revenue, {data['Margin']:.1f}% margin\n"
+
+    # Add top products
+    if insights.get('product_aggregates'):
+        summary += f"\nTop 5 Products by Profit:\n"
+        sorted_products = sorted(insights['product_aggregates'], key=lambda x: x['Profit'], reverse=True)
+        for i, product in enumerate(sorted_products[:5], 1):
+            summary += f"{i}. {product['Product']}: ${product['Profit']:,.0f} profit, {product['Margin_Pct']:.1f}% margin\n"
+
+    # Add monthly trends if available
+    if insights.get('monthly_trends'):
+        summary += f"\nMonthly Trends ({len(insights['monthly_trends'])} months):\n"
+        for trend in insights['monthly_trends'][-3:]:  # Last 3 months
+            summary += f"- {trend['Month_Label']}: ${trend['Revenue']:,.0f} revenue, ${trend['Profit']:,.0f} profit\n"
+
+    return summary
+
+
+def ask_ai_about_data(question, insights):
+    """Use Gemini AI to answer questions about the business data"""
+    if not gemini_client:
+        return "AI service is not available. Please check your API configuration."
+    
     try:
-        # Create prompt for Gemini
+        # Generate comprehensive data summary
+        data_summary = generate_data_summary_for_ai(insights)
+        
+        # Create the prompt for Gemini
         prompt = f"""
-        Based on the following business analytics and goal, provide exactly 3 actionable business strategies using only existing resources:
+You are a business intelligence analyst helping a business owner understand their sales data. 
+You have access to comprehensive business data and should provide actionable insights.
 
-        Business Analytics:
-        - Total Sales: ${insights['total_sales']:,.2f}
-        - Total Profit: ${insights['total_profit']:,.2f}
-        - Profit Margin: {insights['profit_margin']}%
-        - Top-Selling Product: {insights['top_selling_product']} (${insights['top_product_revenue']:,.2f})
-        - Total Items Sold: {insights['total_quantity']}
-        - Average Revenue per Item: ${insights['avg_revenue_per_item']:,.2f}
+Business Data:
+{data_summary}
 
-        Business Goal: {business_goal}
+User Question: {question}
 
-        Provide your response in JSON format with exactly this structure:
-        {{
-            "strategies": [
-                {{"title": "Strategy 1 Title", "description": "Detailed actionable strategy description"}},
-                {{"title": "Strategy 2 Title", "description": "Detailed actionable strategy description"}},
-                {{"title": "Strategy 3 Title", "description": "Detailed actionable strategy description"}}
-            ]
-        }}
+Please provide a helpful, specific answer based on the data above. Focus on:
+1. Direct answers to the question asked
+2. Relevant insights from the data
+3. Actionable recommendations when appropriate
+4. Specific numbers and metrics to support your points
 
-        Focus on practical, cost-effective strategies that can be implemented immediately using existing resources.
-        """
-
+Keep your response conversational but professional, and aim for 2-4 paragraphs maximum.
+"""
+        
+        # Call Gemini API
         response = gemini_client.models.generate_content(
-            model="gemini-2.5-flash",
+            model='gemini-1.5-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
-                response_mime_type="application/json"
+                temperature=0.7,
+                max_output_tokens=1000,
             )
         )
         
-        content = response.text
-        if content is None:
-            return None, "No response content from Gemini"
-        result = json.loads(content)
-        return result['strategies'], None
-        
+        if response and response.text:
+            return response.text.strip()
+        else:
+            return "I'm sorry, I couldn't generate a response. Please try rephrasing your question."
+            
     except Exception as e:
-        return None, f"Error generating AI strategies: {str(e)}"
+        print(f"Error calling Gemini API: {e}")
+        return f"I encountered an error while processing your question: {str(e)}"
+
+
+def save_temp_file(file):
+    """Save uploaded file to temporary location and return path"""
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.csv')
+    file.save(temp_file.name)
+    temp_file.close()
+    return temp_file.name
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -307,55 +527,201 @@ def index():
         if 'csv_file' not in request.files:
             flash('No file selected')
             return redirect(request.url)
-        
+
         file = request.files['csv_file']
-        business_goal = request.form.get('business_goal', '').strip()
-        
+        date_filter = request.form.get('date_filter', 'all')
+        start_date = request.form.get('start_date', '')
+        end_date = request.form.get('end_date', '')
+
         # Validate inputs
         if file.filename == '':
             flash('No file selected')
             return redirect(request.url)
-        
-        if not business_goal:
-            flash('Please enter a business goal')
-            return redirect(request.url)
-        
+
+        # Validate custom date range
+        if date_filter == 'custom':
+            if not start_date or not end_date:
+                flash('Please select both start and end dates for custom range')
+                return redirect(request.url)
+
         if file and file.filename and allowed_file(file.filename):
-            # Save uploaded file
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(filepath)
-            
+            # Save file to session for dashboard access
             try:
-                # Analyze sales data
-                insights, error = analyze_sales_data(filepath)
-                if error:
-                    flash(f'Error analyzing data: {error}')
-                    return redirect(request.url)
-                
-                # Generate AI strategies
-                strategies, ai_error = generate_ai_strategies(insights, business_goal)
-                if ai_error:
-                    flash(f'Error generating strategies: {ai_error}')
-                    # Still show insights even if AI fails
-                    strategies = []
-                
-                return render_template('index.html', 
-                                     insights=insights, 
-                                     strategies=strategies, 
-                                     business_goal=business_goal)
-            finally:
-                # Clean up uploaded file - always execute this
-                if os.path.exists(filepath):
-                    try:
-                        os.remove(filepath)
-                    except OSError:
-                        pass  # Ignore if file is already deleted
+                temp_path = save_temp_file(file)
+                session['csv_file_path'] = temp_path
+                session['date_filter'] = date_filter
+                session['start_date'] = start_date
+                session['end_date'] = end_date
+
+                # Redirect to Executive Dashboard
+                return redirect(url_for('executive_dashboard'))
+
+            except Exception as e:
+                flash(f'Error processing file: {str(e)}')
+                return redirect(request.url)
         else:
             flash('Invalid file type. Please upload a CSV file.')
             return redirect(request.url)
+
+    return render_template('upload.html')
+
+
+@app.route('/dashboard/executive')
+def executive_dashboard():
+    if 'csv_file_path' not in session:
+        flash('Please upload a CSV file first')
+        return redirect(url_for('index'))
+
+    try:
+        insights, error = analyze_sales_data(
+            session['csv_file_path'],
+            session.get('date_filter', 'all'),
+            session.get('start_date'),
+            session.get('end_date')
+        )
+
+        if error:
+            flash(f'Error analyzing data: {error}')
+            return redirect(url_for('index'))
+
+        # Remove raw_data before passing to template (too large for template)
+        template_insights = {k: v for k, v in insights.items() if k != 'raw_data'}
+        
+        return render_template('executive_dashboard.html', insights=template_insights)
+
+    except Exception as e:
+        flash(f'Error loading dashboard: {str(e)}')
+        return redirect(url_for('index'))
+
+
+@app.route('/dashboard/financial')
+def financial_dashboard():
+    if 'csv_file_path' not in session:
+        flash('Please upload a CSV file first')
+        return redirect(url_for('index'))
+
+    try:
+        insights, error = analyze_sales_data(
+            session['csv_file_path'],
+            session.get('date_filter', 'all'),
+            session.get('start_date'),
+            session.get('end_date')
+        )
+
+        if error:
+            flash(f'Error analyzing data: {error}')
+            return redirect(url_for('index'))
+
+        # Remove raw_data before passing to template
+        template_insights = {k: v for k, v in insights.items() if k != 'raw_data'}
+        
+        return render_template('financial_dashboard.html', insights=template_insights)
+
+    except Exception as e:
+        flash(f'Error loading dashboard: {str(e)}')
+        return redirect(url_for('index'))
+
+
+@app.route('/dashboard/growth')
+def growth_dashboard():
+    if 'csv_file_path' not in session:
+        flash('Please upload a CSV file first')
+        return redirect(url_for('index'))
+
+    try:
+        insights, error = analyze_sales_data(
+            session['csv_file_path'],
+            session.get('date_filter', 'all'),
+            session.get('start_date'),
+            session.get('end_date')
+        )
+
+        if error:
+            flash(f'Error analyzing data: {error}')
+            return redirect(url_for('index'))
+
+        # Remove raw_data before passing to template
+        template_insights = {k: v for k, v in insights.items() if k != 'raw_data'}
+        
+        return render_template('growth_dashboard.html', insights=template_insights)
+
+    except Exception as e:
+        flash(f'Error loading dashboard: {str(e)}')
+        return redirect(url_for('index'))
+
+
+@app.route('/dashboard/chat')
+def chat_dashboard():
+    if 'csv_file_path' not in session:
+        flash('Please upload a CSV file first')
+        return redirect(url_for('index'))
+
+    try:
+        insights, error = analyze_sales_data(
+            session['csv_file_path'],
+            session.get('date_filter', 'all'),
+            session.get('start_date'),
+            session.get('end_date')
+        )
+
+        if error:
+            flash(f'Error analyzing data: {error}')
+            return redirect(url_for('index'))
+
+        # Convert insights to JSON-serializable format for session storage
+        session_insights = convert_numpy_types({k: v for k, v in insights.items() if k != 'raw_data'})
+        session['current_insights'] = session_insights
+        
+        # Remove raw_data before passing to template
+        template_insights = {k: v for k, v in insights.items() if k != 'raw_data'}
+        
+        return render_template('chat_dashboard.html', insights=template_insights)
+
+    except Exception as e:
+        flash(f'Error loading dashboard: {str(e)}')
+        return redirect(url_for('index'))
+
+
+@app.route('/dashboard/chat/ask', methods=['POST'])
+def chat_ask():
+    """Handle chat questions via AJAX"""
+    if 'current_insights' not in session:
+        return jsonify({'success': False, 'error': 'No data available for analysis'})
     
-    return render_template('index.html')
+    try:
+        data = request.get_json()
+        question = data.get('question', '').strip()
+        
+        if not question:
+            return jsonify({'success': False, 'error': 'Please provide a question'})
+        
+        if len(question) > 500:
+            return jsonify({'success': False, 'error': 'Question is too long. Please keep it under 500 characters.'})
+        
+        # Get insights from session
+        insights = session['current_insights']
+        
+        # Generate AI response
+        answer = ask_ai_about_data(question, insights)
+        
+        return jsonify({'success': True, 'answer': answer})
+        
+    except Exception as e:
+        print(f"Error in chat_ask: {e}")
+        return jsonify({'success': False, 'error': 'An error occurred while processing your question'})
+
+@app.route('/dashboard/trends')
+def trends_dashboard():
+    """Static trends dashboard with dummy regional market data"""
+    try:
+        # This is a static dashboard that doesn't require CSV data
+        # But we'll check if user has uploaded data to show consistent navigation
+        return render_template('trends_dashboard.html')
+    
+    except Exception as e:
+        flash(f'Error loading trends dashboard: {str(e)}')
+        return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)

@@ -1,13 +1,370 @@
-Date,Product,Revenue,Cost,Quantity,Brand,Category,StockOnHand,LeadTimeDays,SafetyStock
-2025-09-01,Premium Coffee,500,200,50,BeanCraft,Beverages,120,7,30
-2025-09-01,Blueberry Muffins,200,80,20,BakeFresh,Bakery,45,3,15
-2025-09-01,Club Sandwich,300,150,15,FreshEats,Sandwiches,25,2,10
-2025-09-01,Green Tea,150,60,30,BeanCraft,Beverages,80,7,25
-2025-09-02,Premium Coffee,600,250,60,BeanCraft,Beverages,60,7,30
-2025-09-02,Blueberry Muffins,150,70,15,BakeFresh,Bakery,30,3,15
-2025-09-02,Club Sandwich,180,90,12,FreshEats,Sandwiches,13,2,10
-2025-09-02,Croissant,120,50,8,BakeFresh,Bakery,22,3,12
-2025-09-03,Premium Coffee,400,160,40,BeanCraft,Beverages,20,7,30
-2025-09-03,Turkey Wrap,220,110,11,FreshEats,Sandwiches,18,2,8
-2025-09-03,Chocolate Muffins,180,75,18,BakeFresh,Bakery,35,3,15
-2025-09-03,Iced Coffee,300,120,50,BeanCraft,Beverages,90,7,25
+Date,Receipt_ID,Product_Name,Brand_Name,Category,Quantity,Selling_Price,Cost_Price,Stock_For_Month
+2023-01-05,R001,Premium Coffee,BeanCraft,Beverages,2,4.50,1.80,850
+2023-01-05,R001,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,420
+2023-01-05,R002,Latte,BeanCraft,Beverages,1,5.25,2.10,720
+2023-01-06,R003,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,320
+2023-01-06,R003,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,850
+2023-01-07,R004,Caesar Salad,FreshEats,Food,1,10.95,5.25,280
+2023-01-07,R005,Croissant,BakeFresh,Bakery,2,2.85,1.15,380
+2023-01-07,R005,Latte,BeanCraft,Beverages,1,5.25,2.10,720
+2023-01-08,R006,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,250
+2023-01-08,R007,Chicken Wrap,FreshEats,Food,1,9.50,4.50,290
+2023-01-09,R008,Chocolate Chip Cookie,SweetTreats,Desserts,3,2.25,0.90,500
+2023-01-09,R008,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,400
+2023-01-10,R009,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,850
+2023-01-11,R010,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,320
+2023-01-11,R010,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,420
+2023-01-12,R011,Latte,BeanCraft,Beverages,2,5.25,2.10,720
+2023-01-13,R012,Caesar Salad,FreshEats,Food,1,10.95,5.25,280
+2023-01-14,R013,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,250
+2023-01-14,R013,Croissant,BakeFresh,Bakery,1,2.85,1.15,380
+2023-01-15,R014,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,850
+2023-01-15,R014,Chocolate Chip Cookie,SweetTreats,Desserts,2,2.25,0.90,500
+2023-01-16,R015,Chicken Wrap,FreshEats,Food,1,9.50,4.50,290
+2023-01-17,R016,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,400
+2023-01-17,R016,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,420
+2023-01-18,R017,Turkey Sandwich,FreshEats,Food,2,8.95,4.25,320
+2023-01-19,R018,Latte,BeanCraft,Beverages,1,5.25,2.10,720
+2023-01-19,R018,Caesar Salad,FreshEats,Food,1,10.95,5.25,280
+2023-01-20,R019,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,850
+2023-01-21,R020,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,250
+2023-01-22,R021,Croissant,BakeFresh,Bakery,2,2.85,1.15,380
+2023-01-23,R022,Chicken Wrap,FreshEats,Food,1,9.50,4.50,290
+2023-01-23,R022,Chocolate Chip Cookie,SweetTreats,Desserts,1,2.25,0.90,500
+2023-01-24,R023,Earl Grey Tea,BeanCraft,Beverages,2,3.25,1.30,400
+2023-01-25,R024,Latte,BeanCraft,Beverages,1,5.25,2.10,720
+2023-01-25,R024,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,420
+2023-01-26,R025,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,320
+2023-01-27,R026,Caesar Salad,FreshEats,Food,1,10.95,5.25,280
+2023-01-27,R026,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,850
+2023-01-28,R027,Green Smoothie,HealthyBites,Beverages,2,6.95,2.80,250
+2023-01-29,R028,Croissant,BakeFresh,Bakery,1,2.85,1.15,380
+2023-01-30,R029,Latte,BeanCraft,Beverages,1,5.25,2.10,720
+2023-01-30,R029,Chicken Wrap,FreshEats,Food,1,9.50,4.50,290
+2023-01-31,R030,Premium Coffee,BeanCraft,Beverages,2,4.50,1.80,850
+2023-02-01,R031,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,380
+2023-02-01,R031,Chocolate Chip Cookie,SweetTreats,Desserts,2,2.25,0.90,480
+2023-02-02,R032,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,310
+2023-02-03,R033,Caesar Salad,FreshEats,Food,1,10.95,5.25,290
+2023-02-03,R033,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,390
+2023-02-04,R034,Latte,BeanCraft,Beverages,1,5.25,2.10,680
+2023-02-05,R035,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,290
+2023-02-05,R035,Croissant,BakeFresh,Bakery,1,2.85,1.15,350
+2023-02-06,R036,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,920
+2023-02-07,R037,Chicken Wrap,FreshEats,Food,1,9.50,4.50,310
+2023-02-07,R037,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,380
+2023-02-08,R038,Chocolate Chip Cookie,SweetTreats,Desserts,3,2.25,0.90,480
+2023-02-09,R039,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,310
+2023-02-10,R040,Latte,BeanCraft,Beverages,2,5.25,2.10,680
+2023-02-11,R041,Caesar Salad,FreshEats,Food,1,10.95,5.25,290
+2023-02-11,R041,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,920
+2023-02-12,R042,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,390
+2023-02-13,R043,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,290
+2023-02-14,R044,Croissant,BakeFresh,Bakery,2,2.85,1.15,350
+2023-02-14,R044,Latte,BeanCraft,Beverages,1,5.25,2.10,680
+2023-02-15,R045,Chicken Wrap,FreshEats,Food,1,9.50,4.50,310
+2023-02-16,R046,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,380
+2023-02-16,R046,Chocolate Chip Cookie,SweetTreats,Desserts,1,2.25,0.90,480
+2023-02-17,R047,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,920
+2023-02-18,R048,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,310
+2023-02-19,R049,Caesar Salad,FreshEats,Food,1,10.95,5.25,290
+2023-02-19,R049,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,390
+2023-02-20,R050,Latte,BeanCraft,Beverages,1,5.25,2.10,680
+2023-02-21,R051,Green Smoothie,HealthyBites,Beverages,2,6.95,2.80,290
+2023-02-22,R052,Croissant,BakeFresh,Bakery,1,2.85,1.15,350
+2023-02-23,R053,Premium Coffee,BeanCraft,Beverages,2,4.50,1.80,920
+2023-02-23,R053,Chicken Wrap,FreshEats,Food,1,9.50,4.50,310
+2023-02-24,R054,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,380
+2023-02-25,R055,Chocolate Chip Cookie,SweetTreats,Desserts,2,2.25,0.90,480
+2023-02-26,R056,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,310
+2023-02-27,R057,Latte,BeanCraft,Beverages,1,5.25,2.10,680
+2023-02-27,R057,Caesar Salad,FreshEats,Food,1,10.95,5.25,290
+2023-02-28,R058,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,920
+2023-03-01,R059,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,440
+2023-03-02,R060,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,320
+2023-03-02,R060,Croissant,BakeFresh,Bakery,2,2.85,1.15,400
+2023-03-03,R061,Latte,BeanCraft,Beverages,1,5.25,2.10,750
+2023-03-04,R062,Chicken Wrap,FreshEats,Food,1,9.50,4.50,340
+2023-03-04,R062,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,980
+2023-03-05,R063,Earl Grey Tea,BeanCraft,Beverages,2,3.25,1.30,420
+2023-03-06,R064,Chocolate Chip Cookie,SweetTreats,Desserts,1,2.25,0.90,520
+2023-03-07,R065,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,380
+2023-03-07,R065,Caesar Salad,FreshEats,Food,1,10.95,5.25,340
+2023-03-08,R066,Latte,BeanCraft,Beverages,1,5.25,2.10,750
+2023-03-09,R067,Premium Coffee,BeanCraft,Beverages,2,4.50,1.80,980
+2023-03-10,R068,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,440
+2023-03-11,R069,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,320
+2023-03-11,R069,Croissant,BakeFresh,Bakery,1,2.85,1.15,400
+2023-03-12,R070,Chicken Wrap,FreshEats,Food,1,9.50,4.50,340
+2023-03-13,R071,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,420
+2023-03-13,R071,Chocolate Chip Cookie,SweetTreats,Desserts,3,2.25,0.90,520
+2023-03-14,R072,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,980
+2023-03-15,R073,Turkey Sandwich,FreshEats,Food,2,8.95,4.25,380
+2023-03-16,R074,Latte,BeanCraft,Beverages,1,5.25,2.10,750
+2023-03-16,R074,Caesar Salad,FreshEats,Food,1,10.95,5.25,340
+2023-03-17,R075,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,440
+2023-03-18,R076,Green Smoothie,HealthyBites,Beverages,2,6.95,2.80,320
+2023-03-19,R077,Croissant,BakeFresh,Bakery,1,2.85,1.15,400
+2023-03-20,R078,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,980
+2023-03-20,R078,Chicken Wrap,FreshEats,Food,1,9.50,4.50,340
+2023-03-21,R079,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,420
+2023-03-22,R080,Latte,BeanCraft,Beverages,1,5.25,2.10,750
+2023-03-23,R081,Chocolate Chip Cookie,SweetTreats,Desserts,2,2.25,0.90,520
+2023-03-24,R082,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,380
+2023-03-25,R083,Caesar Salad,FreshEats,Food,1,10.95,5.25,340
+2023-03-25,R083,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,980
+2023-03-26,R084,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,440
+2023-03-27,R085,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,320
+2023-03-28,R086,Croissant,BakeFresh,Bakery,2,2.85,1.15,400
+2023-03-28,R086,Latte,BeanCraft,Beverages,1,5.25,2.10,750
+2023-03-29,R087,Chicken Wrap,FreshEats,Food,1,9.50,4.50,340
+2023-03-30,R088,Earl Grey Tea,BeanCraft,Beverages,2,3.25,1.30,420
+2023-03-31,R089,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,980
+2023-04-02,R090,Chocolate Chip Cookie,SweetTreats,Desserts,1,2.25,0.90,560
+2023-04-03,R091,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,410
+2023-04-03,R091,Latte,BeanCraft,Beverages,1,5.25,2.10,800
+2023-04-04,R092,Caesar Salad,FreshEats,Food,1,10.95,5.25,360
+2023-04-05,R093,Premium Coffee,BeanCraft,Beverages,2,4.50,1.80,1020
+2023-04-06,R094,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,460
+2023-04-06,R094,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,340
+2023-04-07,R095,Croissant,BakeFresh,Bakery,1,2.85,1.15,420
+2023-04-08,R096,Chicken Wrap,FreshEats,Food,1,9.50,4.50,360
+2023-04-08,R096,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,450
+2023-04-09,R097,Latte,BeanCraft,Beverages,1,5.25,2.10,800
+2023-04-10,R098,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1020
+2023-04-10,R098,Chocolate Chip Cookie,SweetTreats,Desserts,2,2.25,0.90,560
+2023-04-11,R099,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,410
+2023-04-12,R100,Caesar Salad,FreshEats,Food,1,10.95,5.25,360
+2023-04-13,R101,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,460
+2023-04-13,R101,Green Smoothie,HealthyBites,Beverages,2,6.95,2.80,340
+2023-04-14,R102,Croissant,BakeFresh,Bakery,1,2.85,1.15,420
+2023-04-15,R103,Latte,BeanCraft,Beverages,1,5.25,2.10,800
+2023-04-15,R103,Chicken Wrap,FreshEats,Food,1,9.50,4.50,360
+2023-04-16,R104,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,450
+2023-04-17,R105,Premium Coffee,BeanCraft,Beverages,2,4.50,1.80,1020
+2023-04-18,R106,Chocolate Chip Cookie,SweetTreats,Desserts,3,2.25,0.90,560
+2023-04-19,R107,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,410
+2023-04-20,R108,Caesar Salad,FreshEats,Food,1,10.95,5.25,360
+2023-04-20,R108,Latte,BeanCraft,Beverages,1,5.25,2.10,800
+2023-04-21,R109,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,460
+2023-04-22,R110,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,340
+2023-04-23,R111,Croissant,BakeFresh,Bakery,2,2.85,1.15,420
+2023-04-23,R111,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1020
+2023-04-24,R112,Chicken Wrap,FreshEats,Food,1,9.50,4.50,360
+2023-04-25,R113,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,450
+2023-04-25,R113,Chocolate Chip Cookie,SweetTreats,Desserts,1,2.25,0.90,560
+2023-04-26,R114,Latte,BeanCraft,Beverages,1,5.25,2.10,800
+2023-04-27,R115,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,410
+2023-04-28,R116,Caesar Salad,FreshEats,Food,1,10.95,5.25,360
+2023-04-28,R116,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1020
+2023-04-29,R117,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,460
+2023-04-30,R118,Green Smoothie,HealthyBites,Beverages,2,6.95,2.80,340
+2023-05-01,R119,Croissant,BakeFresh,Bakery,1,2.85,1.15,440
+2023-05-02,R120,Latte,BeanCraft,Beverages,1,5.25,2.10,820
+2023-05-02,R120,Chicken Wrap,FreshEats,Food,1,9.50,4.50,380
+2023-05-03,R121,Earl Grey Tea,BeanCraft,Beverages,2,3.25,1.30,470
+2023-05-04,R122,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1060
+2023-05-05,R123,Chocolate Chip Cookie,SweetTreats,Desserts,2,2.25,0.90,580
+2023-05-06,R124,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,430
+2023-05-06,R124,Caesar Salad,FreshEats,Food,1,10.95,5.25,380
+2023-05-07,R125,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,480
+2023-05-08,R126,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,360
+2023-05-09,R127,Croissant,BakeFresh,Bakery,1,2.85,1.15,440
+2023-05-09,R127,Latte,BeanCraft,Beverages,1,5.25,2.10,820
+2023-05-10,R128,Premium Coffee,BeanCraft,Beverages,2,4.50,1.80,1060
+2023-05-11,R129,Chicken Wrap,FreshEats,Food,1,9.50,4.50,380
+2023-05-12,R130,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,470
+2023-05-12,R130,Chocolate Chip Cookie,SweetTreats,Desserts,3,2.25,0.90,580
+2023-05-13,R131,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,430
+2023-05-14,R132,Latte,BeanCraft,Beverages,1,5.25,2.10,820
+2023-05-15,R133,Caesar Salad,FreshEats,Food,1,10.95,5.25,380
+2023-05-15,R133,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1060
+2023-05-16,R134,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,480
+2023-05-17,R135,Green Smoothie,HealthyBites,Beverages,2,6.95,2.80,360
+2023-05-18,R136,Croissant,BakeFresh,Bakery,1,2.85,1.15,440
+2023-05-19,R137,Chicken Wrap,FreshEats,Food,1,9.50,4.50,380
+2023-05-19,R137,Latte,BeanCraft,Beverages,1,5.25,2.10,820
+2023-05-20,R138,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,470
+2023-05-21,R139,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1060
+2023-05-21,R139,Chocolate Chip Cookie,SweetTreats,Desserts,1,2.25,0.90,580
+2023-05-22,R140,Turkey Sandwich,FreshEats,Food,2,8.95,4.25,430
+2023-05-23,R141,Caesar Salad,FreshEats,Food,1,10.95,5.25,380
+2023-05-24,R142,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,480
+2023-05-24,R142,Latte,BeanCraft,Beverages,1,5.25,2.10,820
+2023-05-25,R143,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,360
+2023-05-26,R144,Croissant,BakeFresh,Bakery,2,2.85,1.15,440
+2023-05-27,R145,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1060
+2023-05-27,R145,Chicken Wrap,FreshEats,Food,1,9.50,4.50,380
+2023-05-28,R146,Earl Grey Tea,BeanCraft,Beverages,2,3.25,1.30,470
+2023-05-29,R147,Chocolate Chip Cookie,SweetTreats,Desserts,2,2.25,0.90,580
+2023-05-30,R148,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,430
+2023-05-31,R149,Latte,BeanCraft,Beverages,1,5.25,2.10,820
+2023-05-31,R149,Caesar Salad,FreshEats,Food,1,10.95,5.25,380
+2023-06-02,R150,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1100
+2023-06-03,R151,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,500
+2023-06-04,R152,Green Smoothie,HealthyBites,Beverages,2,6.95,2.80,380
+2023-06-05,R153,Croissant,BakeFresh,Bakery,1,2.85,1.15,460
+2023-06-05,R153,Latte,BeanCraft,Beverages,1,5.25,2.10,850
+2023-06-06,R154,Chicken Wrap,FreshEats,Food,1,9.50,4.50,400
+2023-06-07,R155,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,490
+2023-06-07,R155,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1100
+2023-06-08,R156,Chocolate Chip Cookie,SweetTreats,Desserts,3,2.25,0.90,600
+2023-06-09,R157,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,450
+2023-06-10,R158,Caesar Salad,FreshEats,Food,1,10.95,5.25,400
+2023-06-10,R158,Latte,BeanCraft,Beverages,1,5.25,2.10,850
+2023-06-11,R159,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,500
+2023-06-12,R160,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,380
+2023-06-13,R161,Croissant,BakeFresh,Bakery,2,2.85,1.15,460
+2023-06-13,R161,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1100
+2023-06-14,R162,Chicken Wrap,FreshEats,Food,1,9.50,4.50,400
+2023-06-15,R163,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,490
+2023-06-15,R163,Chocolate Chip Cookie,SweetTreats,Desserts,1,2.25,0.90,600
+2023-06-16,R164,Latte,BeanCraft,Beverages,1,5.25,2.10,850
+2023-06-17,R165,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,450
+2023-06-18,R166,Caesar Salad,FreshEats,Food,1,10.95,5.25,400
+2023-06-18,R166,Premium Coffee,BeanCraft,Beverages,2,4.50,1.80,1100
+2023-06-19,R167,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,500
+2023-06-20,R168,Green Smoothie,HealthyBites,Beverages,2,6.95,2.80,380
+2023-06-21,R169,Croissant,BakeFresh,Bakery,1,2.85,1.15,460
+2023-06-22,R170,Latte,BeanCraft,Beverages,1,5.25,2.10,850
+2023-06-22,R170,Chicken Wrap,FreshEats,Food,1,9.50,4.50,400
+2023-06-23,R171,Earl Grey Tea,BeanCraft,Beverages,2,3.25,1.30,490
+2023-06-24,R172,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1100
+2023-06-25,R173,Chocolate Chip Cookie,SweetTreats,Desserts,2,2.25,0.90,600
+2023-06-26,R174,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,450
+2023-06-26,R174,Caesar Salad,FreshEats,Food,1,10.95,5.25,400
+2023-06-27,R175,Latte,BeanCraft,Beverages,1,5.25,2.10,850
+2023-06-28,R176,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,500
+2023-06-29,R177,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,380
+2023-06-30,R178,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1100
+2023-06-30,R178,Croissant,BakeFresh,Bakery,1,2.85,1.15,460
+2023-07-03,R179,Latte,BeanCraft,Beverages,1,5.25,2.10,870
+2023-07-04,R180,Chicken Wrap,FreshEats,Food,1,9.50,4.50,420
+2023-07-04,R180,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,510
+2023-07-05,R181,Premium Coffee,BeanCraft,Beverages,2,4.50,1.80,1120
+2023-07-06,R182,Chocolate Chip Cookie,SweetTreats,Desserts,3,2.25,0.90,620
+2023-07-07,R183,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,470
+2023-07-07,R183,Caesar Salad,FreshEats,Food,1,10.95,5.25,420
+2023-07-08,R184,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,520
+2023-07-09,R185,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,400
+2023-07-10,R186,Croissant,BakeFresh,Bakery,2,2.85,1.15,480
+2023-07-10,R186,Latte,BeanCraft,Beverages,1,5.25,2.10,870
+2023-07-11,R187,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1120
+2023-07-12,R188,Chicken Wrap,FreshEats,Food,1,9.50,4.50,420
+2023-07-12,R188,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,510
+2023-07-13,R189,Chocolate Chip Cookie,SweetTreats,Desserts,1,2.25,0.90,620
+2023-07-14,R190,Turkey Sandwich,FreshEats,Food,2,8.95,4.25,470
+2023-07-15,R191,Latte,BeanCraft,Beverages,1,5.25,2.10,870
+2023-07-16,R192,Caesar Salad,FreshEats,Food,1,10.95,5.25,420
+2023-07-16,R192,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1120
+2023-07-17,R193,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,520
+2023-07-18,R194,Green Smoothie,HealthyBites,Beverages,2,6.95,2.80,400
+2023-07-19,R195,Croissant,BakeFresh,Bakery,1,2.85,1.15,480
+2023-07-20,R196,Chicken Wrap,FreshEats,Food,1,9.50,4.50,420
+2023-07-20,R196,Latte,BeanCraft,Beverages,1,5.25,2.10,870
+2023-07-21,R197,Earl Grey Tea,BeanCraft,Beverages,2,3.25,1.30,510
+2023-07-22,R198,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1120
+2023-07-23,R199,Chocolate Chip Cookie,SweetTreats,Desserts,2,2.25,0.90,620
+2023-07-24,R200,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,470
+2023-07-24,R200,Caesar Salad,FreshEats,Food,1,10.95,5.25,420
+2023-07-25,R201,Latte,BeanCraft,Beverages,1,5.25,2.10,870
+2023-07-26,R202,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,520
+2023-07-27,R203,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,400
+2023-07-28,R204,Premium Coffee,BeanCraft,Beverages,2,4.50,1.80,1120
+2023-07-28,R204,Croissant,BakeFresh,Bakery,1,2.85,1.15,480
+2023-07-29,R205,Chicken Wrap,FreshEats,Food,1,9.50,4.50,420
+2023-07-30,R206,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,510
+2023-07-30,R206,Chocolate Chip Cookie,SweetTreats,Desserts,3,2.25,0.90,620
+2023-07-31,R207,Latte,BeanCraft,Beverages,1,5.25,2.10,870
+2023-08-02,R208,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,480
+2023-08-03,R209,Caesar Salad,FreshEats,Food,1,10.95,5.25,430
+2023-08-03,R209,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1140
+2023-08-04,R210,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,530
+2023-08-05,R211,Green Smoothie,HealthyBites,Beverages,2,6.95,2.80,410
+2023-08-06,R212,Croissant,BakeFresh,Bakery,1,2.85,1.15,490
+2023-08-06,R212,Latte,BeanCraft,Beverages,1,5.25,2.10,880
+2023-08-07,R213,Chicken Wrap,FreshEats,Food,1,9.50,4.50,430
+2023-08-08,R214,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,520
+2023-08-08,R214,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1140
+2023-08-09,R215,Chocolate Chip Cookie,SweetTreats,Desserts,2,2.25,0.90,630
+2023-08-10,R216,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,480
+2023-08-11,R217,Latte,BeanCraft,Beverages,1,5.25,2.10,880
+2023-08-12,R218,Caesar Salad,FreshEats,Food,1,10.95,5.25,430
+2023-08-12,R218,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,530
+2023-08-13,R219,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,410
+2023-08-14,R220,Croissant,BakeFresh,Bakery,2,2.85,1.15,490
+2023-08-15,R221,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1140
+2023-08-15,R221,Chicken Wrap,FreshEats,Food,1,9.50,4.50,430
+2023-08-16,R222,Earl Grey Tea,BeanCraft,Beverages,2,3.25,1.30,520
+2023-08-17,R223,Latte,BeanCraft,Beverages,1,5.25,2.10,880
+2023-08-18,R224,Chocolate Chip Cookie,SweetTreats,Desserts,1,2.25,0.90,630
+2023-08-19,R225,Turkey Sandwich,FreshEats,Food,2,8.95,4.25,480
+2023-08-20,R226,Caesar Salad,FreshEats,Food,1,10.95,5.25,430
+2023-08-20,R226,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1140
+2023-08-21,R227,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,530
+2023-08-22,R228,Green Smoothie,HealthyBites,Beverages,1,6.95,2.80,410
+2023-08-23,R229,Croissant,BakeFresh,Bakery,1,2.85,1.15,490
+2023-08-23,R229,Latte,BeanCraft,Beverages,1,5.25,2.10,880
+2023-08-24,R230,Chicken Wrap,FreshEats,Food,1,9.50,4.50,430
+2023-08-25,R231,Earl Grey Tea,BeanCraft,Beverages,1,3.25,1.30,520
+2023-08-25,R231,Premium Coffee,BeanCraft,Beverages,2,4.50,1.80,1140
+2023-08-26,R232,Chocolate Chip Cookie,SweetTreats,Desserts,3,2.25,0.90,630
+2023-08-27,R233,Turkey Sandwich,FreshEats,Food,1,8.95,4.25,480
+2023-08-28,R234,Latte,BeanCraft,Beverages,1,5.25,2.10,880
+2023-08-29,R235,Caesar Salad,FreshEats,Food,1,10.95,5.25,430
+2023-08-29,R235,Blueberry Muffin,BakeFresh,Bakery,1,3.25,1.30,530
+2023-08-30,R236,Green Smoothie,HealthyBites,Beverages,2,6.95,2.80,410
+2023-08-31,R237,Premium Coffee,BeanCraft,Beverages,1,4.50,1.80,1140
+2023-08-31,R237,Croissant,BakeFresh,Bakery,1,2.85,1.15,490
+2024-01-08,R238,Premium Coffee,BeanCraft,Beverages,1,4.75,1.90,950
+2024-01-08,R238,Latte,BeanCraft,Beverages,1,5.50,2.20,750
+2024-01-09,R239,Green Smoothie,HealthyBites,Beverages,2,7.25,2.90,340
+2024-01-10,R240,Croissant,BakeFresh,Bakery,1,3.00,1.20,410
+2024-01-10,R240,Chicken Wrap,FreshEats,Food,1,9.95,4.75,350
+2024-01-11,R241,Earl Grey Tea,BeanCraft,Beverages,1,3.50,1.40,460
+2024-01-11,R241,Chocolate Chip Cookie,SweetTreats,Desserts,2,2.50,1.00,540
+2024-01-12,R242,Turkey Sandwich,FreshEats,Food,1,9.25,4.40,390
+2024-01-13,R243,Caesar Salad,FreshEats,Food,1,11.50,5.50,350
+2024-01-13,R243,Blueberry Muffin,BakeFresh,Bakery,1,3.50,1.40,450
+2024-01-14,R244,Premium Coffee,BeanCraft,Beverages,2,4.75,1.90,950
+2024-01-15,R245,Latte,BeanCraft,Beverages,1,5.50,2.20,750
+2024-01-16,R246,Green Smoothie,HealthyBites,Beverages,1,7.25,2.90,340
+2024-01-16,R246,Croissant,BakeFresh,Bakery,1,3.00,1.20,410
+2024-01-17,R247,Chicken Wrap,FreshEats,Food,1,9.95,4.75,350
+2024-01-18,R248,Earl Grey Tea,BeanCraft,Beverages,2,3.50,1.40,460
+2024-01-19,R249,Premium Coffee,BeanCraft,Beverages,1,4.75,1.90,950
+2024-01-19,R249,Chocolate Chip Cookie,SweetTreats,Desserts,1,2.50,1.00,540
+2024-01-20,R250,Turkey Sandwich,FreshEats,Food,1,9.25,4.40,390
+2024-02-05,R251,Latte,BeanCraft,Beverages,1,5.50,2.20,780
+2024-02-05,R251,Caesar Salad,FreshEats,Food,1,11.50,5.50,370
+2024-02-06,R252,Premium Coffee,BeanCraft,Beverages,1,4.75,1.90,980
+2024-02-07,R253,Blueberry Muffin,BakeFresh,Bakery,1,3.50,1.40,470
+2024-02-07,R253,Green Smoothie,HealthyBites,Beverages,2,7.25,2.90,360
+2024-02-08,R254,Croissant,BakeFresh,Bakery,1,3.00,1.20,430
+2024-02-09,R255,Chicken Wrap,FreshEats,Food,1,9.95,4.75,370
+2024-02-09,R255,Earl Grey Tea,BeanCraft,Beverages,1,3.50,1.40,480
+2024-02-10,R256,Latte,BeanCraft,Beverages,1,5.50,2.20,780
+2024-02-11,R257,Premium Coffee,BeanCraft,Beverages,2,4.75,1.90,980
+2024-02-12,R258,Chocolate Chip Cookie,SweetTreats,Desserts,3,2.50,1.00,560
+2024-02-13,R259,Turkey Sandwich,FreshEats,Food,1,9.25,4.40,410
+2024-02-14,R260,Caesar Salad,FreshEats,Food,1,11.50,5.50,370
+2024-02-14,R260,Blueberry Muffin,BakeFresh,Bakery,1,3.50,1.40,470
+2024-02-15,R261,Green Smoothie,HealthyBites,Beverages,1,7.25,2.90,360
+2024-02-16,R262,Croissant,BakeFresh,Bakery,2,3.00,1.20,430
+2024-02-17,R263,Latte,BeanCraft,Beverages,1,5.50,2.20,780
+2024-02-17,R263,Chicken Wrap,FreshEats,Food,1,9.95,4.75,370
+2024-02-18,R264,Earl Grey Tea,BeanCraft,Beverages,1,3.50,1.40,480
+2024-02-19,R265,Premium Coffee,BeanCraft,Beverages,1,4.75,1.90,980
+2024-02-19,R265,Chocolate Chip Cookie,SweetTreats,Desserts,2,2.50,1.00,560
+2024-02-20,R266,Turkey Sandwich,FreshEats,Food,2,9.25,4.40,410
+2024-02-21,R267,Latte,BeanCraft,Beverages,1,5.50,2.20,780
+2024-02-22,R268,Caesar Salad,FreshEats,Food,1,11.50,5.50,370
+2024-02-22,R268,Premium Coffee,BeanCraft,Beverages,1,4.75,1.90,980
+2024-02-23,R269,Blueberry Muffin,BakeFresh,Bakery,1,3.50,1.40,470
+2024-02-24,R270,Green Smoothie,HealthyBites,Beverages,1,7.25,2.90,360
+2024-02-25,R271,Croissant,BakeFresh,Bakery,1,3.00,1.20,430
+2024-02-25,R271,Chicken Wrap,FreshEats,Food,1,9.95,4.75,370
+2024-02-26,R272,Earl Grey Tea,BeanCraft,Beverages,2,3.50,1.40,480
+2024-02-27,R273,Latte,BeanCraft,Beverages,1,5.50,2.20,780
+2024-02-28,R274,Premium Coffee,BeanCraft,Beverages,1,4.75,1.90,980
+2024-02-28,R274,Chocolate Chip Cookie,SweetTreats,Desserts,1,2.50,1.00,560
