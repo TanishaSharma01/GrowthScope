@@ -3,12 +3,15 @@ import pandas as pd
 from flask import Flask, request, render_template, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 import json
-from openai import OpenAI
+from google import genai
+from google.genai import types
 
-# the newest OpenAI model is "gpt-5" which was released August 7, 2025.
-# do not change this unless explicitly requested by the user
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
+# IMPORTANT: KEEP THIS COMMENT
+# Follow these instructions when using this blueprint:
+# - Note that the newest Gemini model series is "gemini-2.5-flash" or gemini-2.5-pro"
+#   - do not change this unless explicitly requested by the user
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SESSION_SECRET', 'fallback_secret_key')
@@ -67,9 +70,9 @@ def analyze_sales_data(csv_file_path):
         return None, f"Error processing CSV file: {str(e)}"
 
 def generate_ai_strategies(insights, business_goal):
-    """Generate AI-powered business strategies using OpenAI"""
+    """Generate AI-powered business strategies using Google Gemini"""
     try:
-        # Create prompt for OpenAI
+        # Create prompt for Gemini
         prompt = f"""
         Based on the following business analytics and goal, provide exactly 3 actionable business strategies using only existing resources:
 
@@ -95,15 +98,17 @@ def generate_ai_strategies(insights, business_goal):
         Focus on practical, cost-effective strategies that can be implemented immediately using existing resources.
         """
 
-        response = openai_client.chat.completions.create(
-            model="gpt-5",
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"}
+        response = gemini_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json"
+            )
         )
         
-        content = response.choices[0].message.content
+        content = response.text
         if content is None:
-            return None, "No response content from OpenAI"
+            return None, "No response content from Gemini"
         result = json.loads(content)
         return result['strategies'], None
         
