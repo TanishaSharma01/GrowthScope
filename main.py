@@ -976,7 +976,6 @@ def load_demo_data():
             'sample_sales_enhanced': 'Enhanced Sales Data',
             'synthetic_sales_100': 'Synthetic Sales Data (100 products)'
         }
-        flash(f'Successfully loaded {demo_names.get(demo_type, "demo data")}!')
 
         # Redirect to Executive Dashboard
         return redirect(url_for('executive_dashboard'))
