@@ -141,26 +141,31 @@ def index():
             filepath = os.path.join(UPLOAD_FOLDER, filename)
             file.save(filepath)
             
-            # Analyze sales data
-            insights, error = analyze_sales_data(filepath)
-            if error:
-                flash(f'Error analyzing data: {error}')
-                return redirect(request.url)
-            
-            # Generate AI strategies
-            strategies, ai_error = generate_ai_strategies(insights, business_goal)
-            if ai_error:
-                flash(f'Error generating strategies: {ai_error}')
-                # Still show insights even if AI fails
-                strategies = []
-            
-            # Clean up uploaded file
-            os.remove(filepath)
-            
-            return render_template('index.html', 
-                                 insights=insights, 
-                                 strategies=strategies, 
-                                 business_goal=business_goal)
+            try:
+                # Analyze sales data
+                insights, error = analyze_sales_data(filepath)
+                if error:
+                    flash(f'Error analyzing data: {error}')
+                    return redirect(request.url)
+                
+                # Generate AI strategies
+                strategies, ai_error = generate_ai_strategies(insights, business_goal)
+                if ai_error:
+                    flash(f'Error generating strategies: {ai_error}')
+                    # Still show insights even if AI fails
+                    strategies = []
+                
+                return render_template('index.html', 
+                                     insights=insights, 
+                                     strategies=strategies, 
+                                     business_goal=business_goal)
+            finally:
+                # Clean up uploaded file - always execute this
+                if os.path.exists(filepath):
+                    try:
+                        os.remove(filepath)
+                    except OSError:
+                        pass  # Ignore if file is already deleted
         else:
             flash('Invalid file type. Please upload a CSV file.')
             return redirect(request.url)
