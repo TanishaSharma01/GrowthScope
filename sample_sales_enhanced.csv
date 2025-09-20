@@ -11,3 +11,118 @@ Date,Product,Revenue,Cost,Quantity,Brand,Category,StockOnHand,LeadTimeDays,Safet
 2025-09-03,Turkey Wrap,220,110,11,FreshEats,Sandwiches,18,2,8
 2025-09-03,Chocolate Muffins,180,75,18,BakeFresh,Bakery,35,3,15
 2025-09-03,Iced Coffee,300,120,50,BeanCraft,Beverages,90,7,25
+2025-09-04,Cappuccino,350,140,35,BeanCraft,Beverages,85,7,25
+2025-09-04,Caesar Salad,280,120,14,FreshEats,Salads,20,1,8
+2025-09-04,Chocolate Croissant,160,70,10,BakeFresh,Bakery,28,3,12
+2025-09-04,Espresso,240,80,40,BeanCraft,Beverages,95,7,30
+2025-09-04,BLT Sandwich,320,150,16,FreshEats,Sandwiches,22,2,10
+2025-09-05,Latte,450,180,45,BeanCraft,Beverages,75,7,25
+2025-09-05,Banana Bread,200,85,20,BakeFresh,Bakery,40,3,15
+2025-09-05,Greek Salad,300,130,15,FreshEats,Salads,18,1,8
+2025-09-05,Macchiato,180,75,18,BeanCraft,Beverages,60,7,20
+2025-09-05,Bagel with Cream Cheese,150,60,12,BakeFresh,Breakfast,35,2,15
+2025-09-06,Cold Brew,280,110,35,BeanCraft,Beverages,65,7,25
+2025-09-06,Avocado Toast,250,100,10,HealthyBites,Breakfast,15,1,5
+2025-09-06,Cinnamon Roll,140,65,14,BakeFresh,Bakery,32,3,12
+2025-09-06,Americano,200,85,25,BeanCraft,Beverages,80,7,25
+2025-09-06,Chicken Caesar Wrap,380,180,19,FreshEats,Sandwiches,24,2,10
+2025-09-07,Mocha,320,140,32,BeanCraft,Beverages,70,7,25
+2025-09-07,Apple Pie Slice,180,80,12,SweetTreats,Desserts,20,2,8
+2025-09-07,Quinoa Salad,290,125,14,HealthyBites,Salads,16,1,6
+2025-09-07,Chai Latte,250,105,25,BeanCraft,Beverages,55,7,20
+2025-09-07,Sourdough Toast,120,50,8,BakeFresh,Breakfast,25,2,10
+2025-09-08,Frappuccino,380,160,38,BeanCraft,Beverages,45,7,20
+2025-09-08,Cheesecake Slice,220,100,11,SweetTreats,Desserts,18,2,8
+2025-09-08,Mediterranean Wrap,340,155,17,FreshEats,Sandwiches,21,2,8
+2025-09-08,Herbal Tea,130,55,26,BeanCraft,Beverages,70,7,25
+2025-09-08,French Toast,280,120,14,BakeFresh,Breakfast,20,2,8
+2025-09-09,Nitro Coffee,360,150,30,BeanCraft,Beverages,40,7,20
+2025-09-09,Tiramisu,240,110,12,SweetTreats,Desserts,15,2,6
+2025-09-09,Veggie Burger,350,170,14,FreshEats,Sandwiches,18,2,8
+2025-09-09,Matcha Latte,290,125,29,BeanCraft,Beverages,50,7,20
+2025-09-09,Pancakes,320,140,16,BakeFresh,Breakfast,22,2,10
+2025-09-10,Irish Coffee,200,90,20,BeanCraft,Beverages,60,7,25
+2025-09-10,Brownie,160,75,16,SweetTreats,Desserts,30,2,12
+2025-09-10,Grilled Chicken Salad,420,195,21,FreshEats,Salads,25,1,8
+2025-09-10,Smoothie Bowl,380,170,19,HealthyBites,Healthy,20,1,8
+2025-09-10,English Muffin,110,45,11,BakeFresh,Breakfast,40,2,15
+2025-09-11,Cortado,180,80,18,BeanCraft,Beverages,65,7,25
+2025-09-11,Lemon Cake,200,90,10,SweetTreats,Desserts,22,2,8
+2025-09-11,Tuna Salad Sandwich,300,140,15,FreshEats,Sandwiches,20,2,8
+2025-09-11,Green Smoothie,250,110,25,HealthyBites,Healthy,30,1,10
+2025-09-11,Waffle,260,115,13,BakeFresh,Breakfast,18,2,8
+2025-09-12,Flat White,220,95,22,BeanCraft,Beverages,70,7,25
+2025-09-12,Chocolate Chip Cookie,80,35,20,SweetTreats,Desserts,50,2,20
+2025-09-12,Caprese Sandwich,280,125,14,FreshEats,Sandwiches,16,2,8
+2025-09-12,Orange Juice,150,60,15,FreshSqueeze,Beverages,25,1,10
+2025-09-12,Oatmeal,180,75,18,HealthyBites,Breakfast,35,1,12
+2025-09-13,Turkish Coffee,160,70,16,BeanCraft,Beverages,45,7,20
+2025-09-13,Red Velvet Cupcake,140,65,14,SweetTreats,Desserts,28,2,10
+2025-09-13,Ham and Cheese Panini,320,150,16,FreshEats,Sandwiches,22,2,8
+2025-09-13,Apple Juice,130,55,13,FreshSqueeze,Beverages,30,1,12
+2025-09-13,Granola Bowl,220,95,11,HealthyBites,Breakfast,20,1,8
+2025-09-14,Affogato,180,85,18,BeanCraft,Beverages,40,7,15
+2025-09-14,Carrot Cake,200,90,10,SweetTreats,Desserts,15,2,6
+2025-09-14,Philly Cheesesteak,400,190,20,FreshEats,Sandwiches,25,2,10
+2025-09-14,Cranberry Juice,140,60,14,FreshSqueeze,Beverages,35,1,12
+2025-09-14,Chia Pudding,160,70,8,HealthyBites,Healthy,12,1,5
+2025-09-15,Vienna Coffee,200,90,20,BeanCraft,Beverages,55,7,20
+2025-09-15,Banana Split,280,130,14,SweetTreats,Desserts,20,2,8
+2025-09-15,Buffalo Chicken Wrap,360,170,18,FreshEats,Sandwiches,23,2,8
+2025-09-15,Lemonade,120,50,24,FreshSqueeze,Beverages,40,1,15
+2025-09-15,Acai Bowl,340,155,17,HealthyBites,Healthy,18,1,8
+2025-09-16,Gibraltar,170,75,17,BeanCraft,Beverages,60,7,20
+2025-09-16,Ice Cream Sundae,240,110,12,SweetTreats,Desserts,18,2,8
+2025-09-16,Reuben Sandwich,380,180,19,FreshEats,Sandwiches,20,2,8
+2025-09-16,Iced Tea,110,45,22,BeanCraft,Beverages,50,7,20
+2025-09-16,Protein Bar,180,80,9,HealthyBites,Snacks,25,1,10
+2025-09-17,Lungo,150,65,15,BeanCraft,Beverages,65,7,25
+2025-09-17,Fruit Tart,220,100,11,SweetTreats,Desserts,16,2,6
+2025-09-17,Italian Sub,350,165,14,FreshEats,Sandwiches,18,2,8
+2025-09-17,Coconut Water,160,70,16,FreshSqueeze,Beverages,28,1,10
+2025-09-17,Energy Ball,120,55,12,HealthyBites,Snacks,30,1,12
+2025-09-18,Ristretto,140,60,14,BeanCraft,Beverages,70,7,25
+2025-09-18,Panna Cotta,200,90,10,SweetTreats,Desserts,12,2,5
+2025-09-18,Meatball Sub,420,200,21,FreshEats,Sandwiches,24,2,10
+2025-09-18,Sparkling Water,80,30,16,FreshSqueeze,Beverages,45,1,15
+2025-09-18,Trail Mix,100,45,10,HealthyBites,Snacks,35,1,12
+2025-09-19,Romano,160,70,16,BeanCraft,Beverages,55,7,20
+2025-09-19,Chocolate Tart,240,110,12,SweetTreats,Desserts,18,2,8
+2025-09-19,Cuban Sandwich,340,160,17,FreshEats,Sandwiches,21,2,8
+2025-09-19,Kombucha,180,80,18,HealthyBites,Beverages,22,2,8
+2025-09-19,Kale Chips,140,60,14,HealthyBites,Snacks,25,1,10
+2025-09-20,Black Eye,180,80,18,BeanCraft,Beverages,60,7,20
+2025-09-20,Eclair,180,85,9,SweetTreats,Desserts,15,2,6
+2025-09-20,Pastrami Sandwich,380,180,19,FreshEats,Sandwiches,22,2,8
+2025-09-20,Sports Drink,120,50,12,FreshSqueeze,Beverages,30,1,12
+2025-09-20,Veggie Chips,110,50,11,HealthyBites,Snacks,28,1,10
+2025-09-21,Red Eye,200,90,20,BeanCraft,Beverages,65,7,25
+2025-09-21,Profiterole,160,75,8,SweetTreats,Desserts,12,2,5
+2025-09-21,Chicken Parmigiana Sub,450,215,22,FreshEats,Sandwiches,26,2,10
+2025-09-21,Protein Shake,240,110,12,HealthyBites,Beverages,20,1,8
+2025-09-21,Rice Cakes,90,40,9,HealthyBites,Snacks,32,1,12
+2025-09-22,Drip Coffee,180,75,30,BeanCraft,Beverages,80,7,30
+2025-09-22,Macarons,200,90,20,SweetTreats,Desserts,40,2,15
+2025-09-22,Monte Cristo,360,170,18,FreshEats,Sandwiches,20,2,8
+2025-09-22,Coconut Milk,140,60,14,FreshSqueeze,Beverages,25,1,10
+2025-09-22,Popcorn,80,35,16,HealthyBites,Snacks,40,1,15
+2025-09-23,Pour Over,220,95,22,BeanCraft,Beverages,70,7,25
+2025-09-23,Cannoli,180,85,9,SweetTreats,Desserts,14,2,6
+2025-09-23,Fish and Chips,480,230,24,FreshEats,Hot Meals,28,2,12
+2025-09-23,Almond Milk,130,55,13,FreshSqueeze,Beverages,30,1,12
+2025-09-23,Dried Fruit Mix,120,55,12,HealthyBites,Snacks,35,1,12
+2025-09-24,French Press,200,85,20,BeanCraft,Beverages,75,7,25
+2025-09-24,Gelato Cup,160,75,16,SweetTreats,Desserts,32,2,12
+2025-09-24,Shepherd's Pie,420,200,21,FreshEats,Hot Meals,25,2,10
+2025-09-24,Oat Milk,140,60,14,FreshSqueeze,Beverages,28,1,10
+2025-09-24,Hummus Cup,100,45,10,HealthyBites,Snacks,22,1,8
+2025-09-25,Chemex,240,105,24,BeanCraft,Beverages,60,7,20
+2025-09-25,Sorbet Cup,120,55,12,SweetTreats,Desserts,20,2,8
+2025-09-25,Beef Stew,380,180,19,FreshEats,Hot Meals,22,2,8
+2025-09-25,Soy Milk,120,50,12,FreshSqueeze,Beverages,32,1,12
+2025-09-25,Cheese Crackers,90,40,9,HealthyBites,Snacks,30,1,12
+2025-09-26,Aeropress,190,85,19,BeanCraft,Beverages,65,7,25
+2025-09-26,Frozen Yogurt,140,65,14,SweetTreats,Desserts,25,2,10
+2025-09-26,Chicken Stir Fry,400,190,20,FreshEats,Hot Meals,24,2,10
+2025-09-26,Rice Milk,110,45,11,FreshSqueeze,Beverages,25,1,10
+2025-09-26,Pretzel Bites,100,45,10,HealthyBites,Snacks,28,1,10
