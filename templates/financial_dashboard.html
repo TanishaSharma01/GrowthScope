@@ -340,6 +340,29 @@
                 </div>
             </div>
 
+            {% if insights.transaction_metrics %}
+            <div class="financial-card">
+                <h3 class="financial-title">Transaction Economics</h3>
+                <div class="profit-tier">
+                    <span class="tier-label">Avg Transaction Value</span>
+                    <span class="tier-count">${{ "%.2f"|format(insights.transaction_metrics.avg_receipt_value) }}</span>
+                </div>
+                <div class="profit-tier">
+                    <span class="tier-label">Avg Transaction Profit</span>
+                    <span class="tier-count positive">${{ "%.2f"|format(insights.transaction_metrics.avg_receipt_profit) }}</span>
+                </div>
+                <div class="profit-tier">
+                    <span class="tier-label">Transaction Profit Margin</span>
+                    <span class="tier-count {% if insights.transaction_metrics.receipt_profit_margin > 0 %}positive{% else %}negative{% endif %}">
+                        {{ "%.1f"|format(insights.transaction_metrics.receipt_profit_margin) }}%
+                    </span>
+                </div>
+                <div class="profit-tier">
+                    <span class="tier-label">Total Transactions</span>
+                    <span class="tier-count">{{ insights.transaction_metrics.total_receipts }}</span>
+                </div>
+            </div>
+            {% else %}
             <div class="financial-card">
                 <h3 class="financial-title">Cost Breakdown</h3>
                 <div class="profit-tier">
@@ -359,12 +382,13 @@
                     <span class="tier-count positive">${{ "%.2f"|format((insights.total_profit/insights.total_quantity) if insights.total_quantity > 0 else 0) }}</span>
                 </div>
             </div>
+            {% endif %}
         </div>
 
         <!-- Charts Section -->
         <div class="chart-section">
             <div class="chart-card">
-                <h3 class="chart-title">Profit Trend Over Time</h3>
+                <h3 class="chart-title">Monthly Profit Trend</h3>
                 <div class="chart-container">
                     <canvas id="profitTrendChart"></canvas>
                 </div>
@@ -447,30 +471,40 @@
     </div>
 
     <script>
-        // Profit Trend Chart
+        // Monthly Profit Trend Chart (Fixed)
         const profitCtx = document.getElementById('profitTrendChart').getContext('2d');
-        const dailyData = {{ insights.daily_trends | tojson }};
+        const monthlyData = {{ insights.monthly_trends | tojson }};
+
+        console.log('Monthly Data for Financial Dashboard:', monthlyData); // Debug log
 
         new Chart(profitCtx, {
             type: 'line',
             data: {
-                labels: dailyData.map(d => d.Date_str),
+                labels: monthlyData.map(d => d.Month_Label || d.Month_str),
                 datasets: [{
-                    label: 'Daily Profit',
-                    data: dailyData.map(d => d.Profit),
+                    label: 'Monthly Profit',
+                    data: monthlyData.map(d => d.Profit),
                     borderColor: '#28a745',
                     backgroundColor: 'rgba(40, 167, 69, 0.1)',
                     borderWidth: 3,
                     fill: true,
-                    tension: 0.4
+                    tension: 0.4,
+                    pointBackgroundColor: '#28a745',
+                    pointBorderColor: '#28a745',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
                 }, {
-                    label: 'Daily Revenue',
-                    data: dailyData.map(d => d.Revenue),
+                    label: 'Monthly Revenue',
+                    data: monthlyData.map(d => d.Revenue),
                     borderColor: '#667eea',
                     backgroundColor: 'rgba(102, 126, 234, 0.1)',
                     borderWidth: 2,
                     fill: false,
-                    tension: 0.4
+                    tension: 0.4,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#667eea',
+                    pointBorderWidth: 2,
+                    pointRadius: 4
                 }]
             },
             options: {
@@ -483,13 +517,39 @@
                             callback: function(value) {
                                 return '$' + value.toLocaleString();
                             }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
                         }
                     }
                 },
                 plugins: {
                     legend: {
-                        position: 'top'
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': $' + context.parsed.y.toLocaleString();
+                            }
+                        }
                     }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
                 }
             }
         });

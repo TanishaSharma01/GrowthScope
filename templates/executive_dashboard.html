@@ -277,6 +277,31 @@
                 </div>
             </div>
 
+            {% if insights.transaction_metrics %}
+            <div class="kpi-card">
+                <div class="kpi-value">{{ insights.transaction_metrics.total_receipts }}</div>
+                <div class="kpi-label">Total Transactions</div>
+                <div class="kpi-change positive">🧾 Customer orders</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-value">${{ "%.0f"|format(insights.transaction_metrics.avg_receipt_value) }}</div>
+                <div class="kpi-label">Avg Transaction Value</div>
+                <div class="kpi-change positive">💰 Per receipt</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-value">{{ "%.1f"|format(insights.transaction_metrics.avg_items_per_receipt) }}</div>
+                <div class="kpi-label">Items per Transaction</div>
+                <div class="kpi-change positive">📦 Basket size</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-value">${{ "%.0f"|format(insights.transaction_metrics.largest_receipt) }}</div>
+                <div class="kpi-label">Largest Transaction</div>
+                <div class="kpi-change positive">🏆 Peak order</div>
+            </div>
+            {% else %}
             <div class="kpi-card">
                 <div class="kpi-value">{{ insights.total_quantity }}</div>
                 <div class="kpi-label">Items Sold</div>
@@ -288,12 +313,13 @@
                 <div class="kpi-label">Avg Revenue/Item</div>
                 <div class="kpi-change positive">💰 Per unit value</div>
             </div>
+            {% endif %}
         </div>
 
         <!-- Charts Section -->
         <div class="chart-grid">
             <div class="chart-card">
-                <h3 class="chart-title">Revenue Trend</h3>
+                <h3 class="chart-title">Monthly Revenue & Profit Trend</h3>
                 <div class="chart-container">
                     <canvas id="revenueChart"></canvas>
                 </div>
@@ -339,35 +365,50 @@
                     <strong>Product Mix:</strong> {{ insights.category_summary|length }} product categories contributing to revenue
                 </li>
                 {% endif %}
+                {% if insights.monthly_trends|length > 1 %}
+                <li class="insight-item">
+                    <strong>Monthly Performance:</strong> Analysis covers {{ insights.monthly_trends|length }} months of business activity
+                </li>
+                {% endif %}
             </ul>
         </div>
     </div>
 
     <script>
-        // Revenue Trend Chart
+        // Monthly Revenue and Profit Trend Chart
         const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-        const dailyData = {{ insights.daily_trends | tojson }};
+        const monthlyData = {{ insights.monthly_trends | tojson }};
+
+        console.log('Monthly Data:', monthlyData); // Debug log
 
         new Chart(revenueCtx, {
             type: 'line',
             data: {
-                labels: dailyData.map(d => d.Date_str),
+                labels: monthlyData.map(d => d.Month_Label || d.Month_str),
                 datasets: [{
-                    label: 'Revenue',
-                    data: dailyData.map(d => d.Revenue),
+                    label: 'Monthly Revenue',
+                    data: monthlyData.map(d => d.Revenue),
                     borderColor: '#667eea',
                     backgroundColor: 'rgba(102, 126, 234, 0.1)',
                     borderWidth: 3,
                     fill: true,
-                    tension: 0.4
+                    tension: 0.4,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#667eea',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
                 }, {
-                    label: 'Profit',
-                    data: dailyData.map(d => d.Profit),
+                    label: 'Monthly Profit',
+                    data: monthlyData.map(d => d.Profit),
                     borderColor: '#28a745',
                     backgroundColor: 'rgba(40, 167, 69, 0.1)',
                     borderWidth: 3,
                     fill: true,
-                    tension: 0.4
+                    tension: 0.4,
+                    pointBackgroundColor: '#28a745',
+                    pointBorderColor: '#28a745',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
                 }]
             },
             options: {
@@ -380,13 +421,39 @@
                             callback: function(value) {
                                 return '$' + value.toLocaleString();
                             }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
                         }
                     }
                 },
                 plugins: {
                     legend: {
-                        position: 'top'
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': $' + context.parsed.y.toLocaleString();
+                            }
+                        }
                     }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
                 }
             }
         });

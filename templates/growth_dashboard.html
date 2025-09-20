@@ -371,6 +371,19 @@
                 <div class="growth-insight">Active brand count</div>
             </div>
 
+            {% if insights.transaction_metrics %}
+            <div class="growth-card">
+                <div class="growth-value">{{ insights.transaction_metrics.total_receipts }}</div>
+                <div class="growth-label">Customer Transactions</div>
+                <div class="growth-insight">Total completed orders</div>
+            </div>
+
+            <div class="growth-card">
+                <div class="growth-value">{{ "%.1f"|format(insights.transaction_metrics.avg_items_per_receipt) }}</div>
+                <div class="growth-label">Basket Size</div>
+                <div class="growth-insight">Items per transaction</div>
+            </div>
+            {% else %}
             <div class="growth-card">
                 <div class="growth-value">{{ insights.category_summary|length }}</div>
                 <div class="growth-label">Market Segments</div>
@@ -382,6 +395,7 @@
                 <div class="growth-label">Daily Average Revenue</div>
                 <div class="growth-insight">Average sales per day</div>
             </div>
+            {% endif %}
         </div>
 
         <!-- Charts Section -->
@@ -475,6 +489,24 @@
                 </div>
             </div>
 
+            {% if insights.transaction_metrics %}
+            <div class="recommendation-item">
+                <div class="recommendation-title">Optimize Transaction Value</div>
+                <div class="recommendation-desc">
+                    Current average transaction value is ${{ "%.0f"|format(insights.transaction_metrics.avg_receipt_value) }} with {{ "%.1f"|format(insights.transaction_metrics.avg_items_per_receipt) }} items per basket.
+                    Consider bundle deals or cross-selling strategies to increase basket size and transaction value.
+                </div>
+            </div>
+
+            <div class="recommendation-item">
+                <div class="recommendation-title">Learn from High-Value Transactions</div>
+                <div class="recommendation-desc">
+                    Your largest transaction was ${{ "%.0f"|format(insights.transaction_metrics.largest_receipt) }}.
+                    Analyze what drove this high-value purchase and replicate those conditions to encourage similar transaction sizes.
+                </div>
+            </div>
+            {% endif %}
+
             {% if insights.profit_margin < 20 %}
             <div class="recommendation-item">
                 <div class="recommendation-title">Improve Profit Margins</div>
@@ -498,7 +530,11 @@
             <div class="recommendation-item">
                 <div class="recommendation-title">Scale Successful Patterns</div>
                 <div class="recommendation-desc">
+                    {% if insights.transaction_metrics %}
+                    With {{ insights.transaction_metrics.total_receipts }} transactions and ${{ "%.0f"|format(insights.transaction_metrics.avg_receipt_value) }} average transaction value,
+                    {% else %}
                     With {{ insights.total_quantity }} units sold and ${{ "%.0f"|format(insights.avg_revenue_per_item) }} average revenue per item,
+                    {% endif %}
                     focus on scaling your proven business model to new markets or customer segments.
                 </div>
             </div>

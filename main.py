@@ -118,17 +118,76 @@ def get_date_range_summary(df, date_filter):
     }
 
 
+def compute_monthly_trends(df):
+    """Compute monthly revenue and profit trends"""
+    try:
+        # Ensure Date column is datetime
+        df['Date'] = pd.to_datetime(df['Date'])
+
+        # Create Year-Month column for grouping
+        df['Year_Month'] = df['Date'].dt.to_period('M')
+
+        # Group by month and aggregate
+        monthly_data = df.groupby('Year_Month').agg({
+            'Revenue': 'sum',
+            'Cost': 'sum',
+            'Quantity': 'sum'
+        }).reset_index()
+
+        # Calculate profit
+        monthly_data['Profit'] = monthly_data['Revenue'] - monthly_data['Cost']
+
+        # Convert Period to string for JSON serialization and sorting
+        monthly_data['Month_str'] = monthly_data['Year_Month'].astype(str)
+        monthly_data['Sort_Date'] = monthly_data['Year_Month'].dt.start_time
+
+        # Sort by date
+        monthly_data = monthly_data.sort_values('Sort_Date')
+
+        # Format month labels for display (e.g., "Jan 2023")
+        monthly_data['Month_Label'] = monthly_data['Year_Month'].dt.strftime('%b %Y')
+
+        return monthly_data[['Month_str', 'Month_Label', 'Revenue', 'Cost', 'Profit', 'Quantity']].to_dict('records')
+
+    except Exception as e:
+        print(f"Error computing monthly trends: {str(e)}")
+        return []
+
+
 def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_date=None):
     """Process CSV file and calculate business insights with date filtering"""
     try:
         # Read CSV file
         df = pd.read_csv(csv_file_path)
 
-        # Ensure required columns exist
-        required_columns = ['Date', 'Product', 'Revenue', 'Cost', 'Quantity']
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        if missing_columns:
-            return None, f"Missing required columns: {', '.join(missing_columns)}"
+        # Handle both old and new data formats
+        if 'Product_Name' in df.columns:
+            # New transaction-based format
+            required_columns = ['Date', 'Receipt_ID', 'Product_Name', 'Brand_Name', 'Category', 'Quantity',
+                                'Selling_Price', 'Cost_Price']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                return None, f"Missing required columns: {', '.join(missing_columns)}"
+
+            # Map new column names to old format
+            df['Product'] = df['Product_Name']
+            df['Brand'] = df['Brand_Name']
+            # Calculate total revenue and cost for each line item
+            df['Revenue'] = df['Selling_Price'] * df['Quantity']
+            df['Cost'] = df['Cost_Price'] * df['Quantity']
+
+        else:
+            # Old format
+            required_columns = ['Date', 'Product', 'Revenue', 'Cost', 'Quantity']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                return None, f"Missing required columns: {', '.join(missing_columns)}"
+
+            # Optional columns with defaults for old format
+            if 'Brand' not in df.columns:
+                df['Brand'] = 'Unknown'
+            if 'Category' not in df.columns:
+                df['Category'] = 'Unknown'
 
         # Apply date filtering
         df = filter_data_by_date_range(df, date_filter, start_date, end_date)
@@ -138,12 +197,6 @@ def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_da
 
         # Get date range summary
         date_summary = get_date_range_summary(df, date_filter)
-
-        # Optional columns with defaults
-        if 'Brand' not in df.columns:
-            df['Brand'] = 'Unknown'
-        if 'Category' not in df.columns:
-            df['Category'] = 'Unknown'
 
         # Calculate basic insights
         total_sales = df['Revenue'].sum()
@@ -162,14 +215,8 @@ def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_da
             top_selling_product = "N/A"
             top_product_revenue = 0
 
-        # Time series data for trends
-        df_daily = df.groupby('Date').agg({
-            'Revenue': 'sum',
-            'Cost': 'sum',
-            'Quantity': 'sum'
-        }).reset_index()
-        df_daily['Profit'] = df_daily['Revenue'] - df_daily['Cost']
-        df_daily['Date_str'] = df_daily['Date'].dt.strftime('%Y-%m-%d')
+        # Monthly trends (replacing daily trends)
+        monthly_trends = compute_monthly_trends(df)
 
         # Product performance
         product_agg = df.groupby('Product').agg({
@@ -179,6 +226,28 @@ def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_da
         }).reset_index()
         product_agg['Profit'] = product_agg['Revenue'] - product_agg['Cost']
         product_agg['Margin_Pct'] = (product_agg['Profit'] / product_agg['Revenue'] * 100).fillna(0)
+
+        # Transaction-level analytics (if Receipt_ID exists)
+        transaction_metrics = {}
+        if 'Receipt_ID' in df.columns:
+            # Calculate per-receipt metrics
+            receipt_agg = df.groupby('Receipt_ID').agg({
+                'Revenue': 'sum',
+                'Cost': 'sum',
+                'Quantity': 'sum'
+            }).reset_index()
+            receipt_agg['Profit'] = receipt_agg['Revenue'] - receipt_agg['Cost']
+            receipt_agg['Items_Per_Receipt'] = df.groupby('Receipt_ID').size().values
+
+            transaction_metrics = {
+                'total_receipts': len(receipt_agg),
+                'avg_receipt_value': receipt_agg['Revenue'].mean(),
+                'avg_items_per_receipt': receipt_agg['Items_Per_Receipt'].mean(),
+                'avg_receipt_profit': receipt_agg['Profit'].mean(),
+                'largest_receipt': receipt_agg['Revenue'].max(),
+                'receipt_profit_margin': (receipt_agg['Profit'].sum() / receipt_agg['Revenue'].sum() * 100) if
+                receipt_agg['Revenue'].sum() > 0 else 0
+            }
 
         # Brand and category summaries
         brand_summary = {}
@@ -230,8 +299,11 @@ def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_da
             # Date filtering info
             'date_summary': date_summary,
 
-            # Time series data
-            'daily_trends': df_daily.to_dict('records'),
+            # Time series data - NOW MONTHLY
+            'monthly_trends': monthly_trends,
+
+            # Transaction metrics
+            'transaction_metrics': transaction_metrics,
 
             # Product analysis
             'product_aggregates': product_agg.to_dict('records') if not product_agg.empty else [],
