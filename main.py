@@ -934,6 +934,57 @@ def index():
     return render_template('upload.html')
 
 
+@app.route('/load-demo-data', methods=['POST'])
+def load_demo_data():
+    """Load demo CSV data"""
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+
+    try:
+        demo_type = request.form.get('demo_type')
+        date_filter = request.form.get('date_filter', 'all')
+        start_date = request.form.get('start_date', '')
+        end_date = request.form.get('end_date', '')
+
+        # Map demo types to file names
+        demo_files = {
+            'sample_sales_enhanced': 'sample_sales_enhanced.csv',
+            'synthetic_sales_100': 'synthetic_sales_100.csv'
+        }
+
+        if demo_type not in demo_files:
+            flash('Invalid demo data type selected')
+            return redirect(url_for('index'))
+
+        # Get the file path
+        demo_file_path = demo_files[demo_type]
+
+        # Check if file exists
+        if not os.path.exists(demo_file_path):
+            flash(f'Demo file {demo_file_path} not found. Please ensure the file exists in your project root.')
+            return redirect(url_for('index'))
+
+        # Store demo file path in session (same as uploaded file)
+        session['csv_file_path'] = demo_file_path
+        session['date_filter'] = date_filter
+        session['start_date'] = start_date
+        session['end_date'] = end_date
+        session['demo_data'] = True  # Flag to indicate this is demo data
+
+        # Add success message
+        demo_names = {
+            'sample_sales_enhanced': 'Enhanced Sales Data',
+            'synthetic_sales_100': 'Synthetic Sales Data (100 products)'
+        }
+        flash(f'Successfully loaded {demo_names.get(demo_type, "demo data")}!')
+
+        # Redirect to Executive Dashboard
+        return redirect(url_for('executive_dashboard'))
+
+    except Exception as e:
+        flash(f'Error loading demo data: {str(e)}')
+        return redirect(url_for('index'))
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 5001))
     app.run(host='0.0.0.0', port=port, debug=False)
