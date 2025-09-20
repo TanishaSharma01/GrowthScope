@@ -1,0 +1,13 @@
+Date,Product,Revenue,Cost,Quantity,Brand,Category,StockOnHand,LeadTimeDays,SafetyStock
+2025-09-01,Premium Coffee,500,200,50,BeanCraft,Beverages,120,7,30
+2025-09-01,Blueberry Muffins,200,80,20,BakeFresh,Bakery,45,3,15
+2025-09-01,Club Sandwich,300,150,15,FreshEats,Sandwiches,25,2,10
+2025-09-01,Green Tea,150,60,30,BeanCraft,Beverages,80,7,25
+2025-09-02,Premium Coffee,600,250,60,BeanCraft,Beverages,60,7,30
+2025-09-02,Blueberry Muffins,150,70,15,BakeFresh,Bakery,30,3,15
+2025-09-02,Club Sandwich,180,90,12,FreshEats,Sandwiches,13,2,10
+2025-09-02,Croissant,120,50,8,BakeFresh,Bakery,22,3,12
+2025-09-03,Premium Coffee,400,160,40,BeanCraft,Beverages,20,7,30
+2025-09-03,Turkey Wrap,220,110,11,FreshEats,Sandwiches,18,2,8
+2025-09-03,Chocolate Muffins,180,75,18,BakeFresh,Bakery,35,3,15
+2025-09-03,Iced Coffee,300,120,50,BeanCraft,Beverages,90,7,25

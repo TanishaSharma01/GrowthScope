@@ -270,7 +270,8 @@
                                    required>
                         </div>
                         <small style="color: #6c757d; margin-top: 5px; display: block;">
-                            Required columns: Date, Product, Revenue, Cost, Quantity
+                            Required columns: Date, Product, Revenue, Cost, Quantity, Brand, Category<br>
+                            Optional inventory columns: StockOnHand, LeadTimeDays, SafetyStock
                         </small>
                     </div>
 
@@ -321,6 +322,114 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Brand Performance -->
+                    {% if insights.brand_summary %}
+                        <div class="insights-card">
+                            <h2 class="card-title">🏷️ Brand Performance</h2>
+                            <div class="insights-grid">
+                                {% for brand, data in insights.brand_summary.items() %}
+                                    <div class="insight-item">
+                                        <div class="insight-value">{{ brand }}</div>
+                                        <div class="insight-label">${{ "%.0f"|format(data.Revenue) }} | {{ "%.1f"|format(data.Margin) }}% margin</div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Category Performance -->
+                    {% if insights.category_summary %}
+                        <div class="insights-card">
+                            <h2 class="card-title">📂 Category Performance</h2>
+                            <div class="insights-grid">
+                                {% for category, data in insights.category_summary.items() %}
+                                    <div class="insight-item">
+                                        <div class="insight-value">{{ category }}</div>
+                                        <div class="insight-label">${{ "%.0f"|format(data.Revenue) }} | {{ "%.1f"|format(data.Margin) }}% margin</div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Top Products Rankings -->
+                    {% if insights.rankings %}
+                        <div class="insights-card">
+                            <h2 class="card-title">🏆 Top Products by Category & Brand</h2>
+                            
+                            {% if insights.rankings.by_category %}
+                                <h3 style="margin-bottom: 15px; color: #343a40;">By Category:</h3>
+                                {% for category, products in insights.rankings.by_category.items() %}
+                                    <div style="margin-bottom: 15px;">
+                                        <strong>{{ category }}:</strong>
+                                        {% for product in products %}
+                                            <span style="margin-left: 10px;">{{ product.Product }} (${{ "%.0f"|format(product.Profit) }})</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+
+                            {% if insights.rankings.by_brand %}
+                                <h3 style="margin-bottom: 15px; color: #343a40; margin-top: 20px;">By Brand:</h3>
+                                {% for brand, products in insights.rankings.by_brand.items() %}
+                                    <div style="margin-bottom: 15px;">
+                                        <strong>{{ brand }}:</strong>
+                                        {% for product in products %}
+                                            <span style="margin-left: 10px;">{{ product.Product }} (${{ "%.0f"|format(product.Profit) }})</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Profit Tier Analysis -->
+                    {% if insights.profit_tiers %}
+                        <div class="insights-card">
+                            <h2 class="card-title">📈 Profit Tier Analysis</h2>
+                            
+                            {% for tier, products in insights.profit_tiers.items() %}
+                                {% if products %}
+                                    <div style="margin-bottom: 20px;">
+                                        <h3 style="color: 
+                                            {% if tier == 'High' %}#28a745
+                                            {% elif tier == 'Medium' %}#ffc107
+                                            {% elif tier == 'Low' %}#fd7e14
+                                            {% else %}#dc3545{% endif %};">
+                                            {{ tier }} Margin ({{ products|length }} products)
+                                        </h3>
+                                        {% for product in products[:5] %}
+                                            <div style="margin-left: 15px; margin-bottom: 5px;">
+                                                {{ product.product }}: {{ "%.1f"|format(product.margin) }}% margin, ${{ "%.0f"|format(product.profit) }} profit
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Ordering Recommendations -->
+                    {% if insights.reorder_recommendations %}
+                        <div class="insights-card">
+                            <h2 class="card-title">📦 Inventory & Ordering Recommendations</h2>
+                            {% for rec in insights.reorder_recommendations %}
+                                <div class="strategy-item">
+                                    <div class="strategy-title">{{ rec.product }}</div>
+                                    <div class="strategy-description">
+                                        {{ rec.reason }} - Recommended order: {{ rec.recommended_order }} units
+                                        (ADS: {{ rec.ads }} units/day)
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% elif insights.reorder_error %}
+                        <div class="insights-card">
+                            <h2 class="card-title">📦 Inventory Analysis</h2>
+                            <p style="color: #6c757d; padding: 20px;">{{ insights.reorder_error }}</p>
+                        </div>
+                    {% endif %}
 
                     <!-- AI Strategies -->
                     {% if strategies %}
