@@ -109,39 +109,21 @@
             Demo Mode - Enter any username and password
         </div>
 
-        <form id="loginForm">
+        <form id="loginForm" method="post" action="{{ url_for('login', next=request.args.get('next')) }}">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" required>
+                <input type="text" id="username" required name="username">
             </div>
 
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" required>
+                <input type="password" id="password" required name="password">
             </div>
 
             <button type="submit" class="login-btn">Login</button>
         </form>
     </div>
 
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
-            if (username && password) {
-                // Store simple session info
-                localStorage.setItem('loggedIn', 'true');
-                localStorage.setItem('username', username);
-
-                // Redirect to your main application (/home)
-                window.location.href = '/home';
-            } else {
-                alert('Please enter both username and password');
-            }
-        });
-    </script>
+    <!-- JS login handler removed. Using server side POST. -->
 </body>
 </html>

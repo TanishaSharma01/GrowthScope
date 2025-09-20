@@ -27,6 +27,21 @@ else:
 app = Flask(__name__)
 app.secret_key = os.environ.get('SESSION_SECRET', 'fallback_secret_key_for_development')
 
+# Force login for all routes except /login and static
+from flask import request
+
+
+@app.before_request
+def require_login_first():
+    # Allow login route and static files without session
+    if request.endpoint in ('login', 'static'):
+        return
+    if request.path.startswith('/static/'):
+        return
+    if not session.get('logged_in'):
+        return redirect(url_for('login', next=request.path))
+
+
 # Configure upload settings
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'csv'}
@@ -75,41 +90,41 @@ def filter_data_by_date_range(df, date_filter, start_date=None, end_date=None):
         # Get the max date from the data instead of current date
         max_data_date = df['Date'].max()
         min_data_date = df['Date'].min()
-        
+
         print(f"Data date range: {min_data_date.strftime('%Y-%m-%d')} to {max_data_date.strftime('%Y-%m-%d')}")
 
         if date_filter == 'last_30_days':
             start_filter = max_data_date - timedelta(days=30)
             filtered_df = df[df['Date'] >= start_filter]
-            
+
         elif date_filter == 'last_90_days':
             start_filter = max_data_date - timedelta(days=90)
             filtered_df = df[df['Date'] >= start_filter]
-            
+
         elif date_filter == 'current_month':
             # Current month relative to the latest data
             start_filter = max_data_date.replace(day=1)
             filtered_df = df[df['Date'] >= start_filter]
-            
+
         elif date_filter == 'last_month':
             # Last month relative to the latest data
             current_month_start = max_data_date.replace(day=1)
             last_month_end = current_month_start - timedelta(days=1)
             last_month_start = last_month_end.replace(day=1)
             filtered_df = df[(df['Date'] >= last_month_start) & (df['Date'] <= last_month_end)]
-            
+
         elif date_filter == 'current_quarter':
             # Current quarter relative to the latest data
             quarter = (max_data_date.month - 1) // 3 + 1
             quarter_start_month = (quarter - 1) * 3 + 1
             start_filter = max_data_date.replace(month=quarter_start_month, day=1)
             filtered_df = df[df['Date'] >= start_filter]
-            
+
         elif date_filter == 'custom' and start_date and end_date:
             start_filter = pd.to_datetime(start_date)
             end_filter = pd.to_datetime(end_date)
             filtered_df = df[(df['Date'] >= start_filter) & (df['Date'] <= end_filter)]
-            
+
         else:
             filtered_df = df
 
@@ -158,7 +173,7 @@ def compute_monthly_trends(df):
     try:
         if df.empty:
             return []
-            
+
         # Ensure Date column is datetime
         df['Date'] = pd.to_datetime(df['Date'])
 
@@ -179,11 +194,11 @@ def compute_monthly_trends(df):
         if 'Receipt_ID' in df.columns:
             # Calculate total cost per receipt (ticket) for each month
             monthly_median_costs = []
-            
+
             for year_month in monthly_data['Year_Month']:
                 # Filter data for this month
                 month_data = df[df['Year_Month'] == year_month]
-                
+
                 # Calculate total cost per receipt (ticket)
                 if not month_data.empty:
                     receipt_costs = month_data.groupby('Receipt_ID')['Cost'].sum()
@@ -191,15 +206,15 @@ def compute_monthly_trends(df):
                     monthly_median_costs.append(median_ticket_cost)
                 else:
                     monthly_median_costs.append(0)
-            
+
             monthly_data['Median_Ticket_Cost'] = monthly_median_costs
         else:
             # If no receipt data, use average cost per transaction based on daily averages
             monthly_median_costs = []
-            
+
             for year_month in monthly_data['Year_Month']:
                 month_data = df[df['Year_Month'] == year_month]
-                
+
                 if not month_data.empty:
                     # Group by date and calculate daily total costs, then find median
                     daily_costs = month_data.groupby('Date')['Cost'].sum()
@@ -207,7 +222,7 @@ def compute_monthly_trends(df):
                     monthly_median_costs.append(median_daily_cost)
                 else:
                     monthly_median_costs.append(0)
-            
+
             monthly_data['Median_Ticket_Cost'] = monthly_median_costs
 
         # Convert Period to string for JSON serialization and sorting
@@ -220,8 +235,10 @@ def compute_monthly_trends(df):
         # Format month labels for display (e.g., "Jan 2023")
         monthly_data['Month_Label'] = monthly_data['Year_Month'].dt.strftime('%b %Y')
 
-        result = monthly_data[['Month_str', 'Month_Label', 'Revenue', 'Cost', 'Profit', 'Quantity', 'Median_Ticket_Cost']].to_dict('records')
-        
+        result = monthly_data[
+            ['Month_str', 'Month_Label', 'Revenue', 'Cost', 'Profit', 'Quantity', 'Median_Ticket_Cost']].to_dict(
+            'records')
+
         # Convert numpy types to Python types
         return convert_numpy_types(result)
 
@@ -325,7 +342,7 @@ def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_da
                 'avg_receipt_profit': float(receipt_agg['Profit'].mean()),
                 'largest_receipt': float(receipt_agg['Revenue'].max()),
                 'receipt_profit_margin': float((receipt_agg['Profit'].sum() / receipt_agg['Revenue'].sum() * 100) if
-                receipt_agg['Revenue'].sum() > 0 else 0)
+                                               receipt_agg['Revenue'].sum() > 0 else 0)
             }
 
         # Brand and category summaries
@@ -404,7 +421,7 @@ def generate_data_summary_for_ai(insights):
     """Generate a comprehensive data summary for AI analysis"""
     if not insights:
         return "No data available for analysis."
-    
+
     summary = f"""
 Business Data Summary:
 - Total Revenue: ${insights['total_sales']:,.2f}
@@ -470,11 +487,11 @@ def ask_ai_about_data(question, insights):
     """Use Gemini AI to answer questions about the business data"""
     if not gemini_client:
         return "AI service is not available. Please check your API configuration."
-    
+
     try:
         # Generate comprehensive data summary
         data_summary = generate_data_summary_for_ai(insights)
-        
+
         # Create the prompt for Gemini
         prompt = f"""
 You are a business intelligence analyst helping a business owner understand their sales data. 
@@ -493,7 +510,7 @@ Please provide a helpful, specific answer based on the data above. Focus on:
 
 Keep your response conversational but professional, and aim for 2-4 paragraphs maximum.
 """
-        
+
         # Call Gemini API
         response = gemini_client.models.generate_content(
             model='gemini-1.5-flash',
@@ -503,12 +520,12 @@ Keep your response conversational but professional, and aim for 2-4 paragraphs m
                 max_output_tokens=1000,
             )
         )
-        
+
         if response and response.text:
             return response.text.strip()
         else:
             return "I'm sorry, I couldn't generate a response. Please try rephrasing your question."
-            
+
     except Exception as e:
         print(f"Error calling Gemini API: {e}")
         return f"I encountered an error while processing your question: {str(e)}"
@@ -520,53 +537,6 @@ def save_temp_file(file):
     file.save(temp_file.name)
     temp_file.close()
     return temp_file.name
-
-
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        # Check if file was uploaded
-        if 'csv_file' not in request.files:
-            flash('No file selected')
-            return redirect(request.url)
-
-        file = request.files['csv_file']
-        date_filter = request.form.get('date_filter', 'all')
-        start_date = request.form.get('start_date', '')
-        end_date = request.form.get('end_date', '')
-
-        # Validate inputs
-        if file.filename == '':
-            flash('No file selected')
-            return redirect(request.url)
-
-        # Validate custom date range
-        if date_filter == 'custom':
-            if not start_date or not end_date:
-                flash('Please select both start and end dates for custom range')
-                return redirect(request.url)
-
-        if file and file.filename and allowed_file(file.filename):
-            # Save file to session for dashboard access
-            try:
-                temp_path = save_temp_file(file)
-                session['csv_file_path'] = temp_path
-                session['date_filter'] = date_filter
-                session['start_date'] = start_date
-                session['end_date'] = end_date
-
-                # Redirect to Executive Dashboard
-                return redirect(url_for('executive_dashboard'))
-
-            except Exception as e:
-                flash(f'Error processing file: {str(e)}')
-                return redirect(request.url)
-        else:
-            flash('Invalid file type. Please upload a CSV file.')
-            return redirect(request.url)
-
-    return render_template('upload.html')
-
 
 @app.route('/dashboard/executive')
 def executive_dashboard():
@@ -588,7 +558,7 @@ def executive_dashboard():
 
         # Remove raw_data before passing to template (too large for template)
         template_insights = {k: v for k, v in insights.items() if k != 'raw_data'}
-        
+
         return render_template('executive_dashboard.html', insights=template_insights)
 
     except Exception as e:
@@ -616,7 +586,7 @@ def financial_dashboard():
 
         # Remove raw_data before passing to template
         template_insights = {k: v for k, v in insights.items() if k != 'raw_data'}
-        
+
         return render_template('financial_dashboard.html', insights=template_insights)
 
     except Exception as e:
@@ -644,7 +614,7 @@ def growth_dashboard():
 
         # Remove raw_data before passing to template
         template_insights = {k: v for k, v in insights.items() if k != 'raw_data'}
-        
+
         return render_template('growth_dashboard.html', insights=template_insights)
 
     except Exception as e:
@@ -673,10 +643,10 @@ def chat_dashboard():
         # Convert insights to JSON-serializable format for session storage
         session_insights = convert_numpy_types({k: v for k, v in insights.items() if k != 'raw_data'})
         session['current_insights'] = session_insights
-        
+
         # Remove raw_data before passing to template
         template_insights = {k: v for k, v in insights.items() if k != 'raw_data'}
-        
+
         return render_template('chat_dashboard.html', insights=template_insights)
 
     except Exception as e:
@@ -689,28 +659,29 @@ def chat_ask():
     """Handle chat questions via AJAX"""
     if 'current_insights' not in session:
         return jsonify({'success': False, 'error': 'No data available for analysis'})
-    
+
     try:
         data = request.get_json()
         question = data.get('question', '').strip()
-        
+
         if not question:
             return jsonify({'success': False, 'error': 'Please provide a question'})
-        
+
         if len(question) > 500:
             return jsonify({'success': False, 'error': 'Question is too long. Please keep it under 500 characters.'})
-        
+
         # Get insights from session
         insights = session['current_insights']
-        
+
         # Generate AI response
         answer = ask_ai_about_data(question, insights)
-        
+
         return jsonify({'success': True, 'answer': answer})
-        
+
     except Exception as e:
         print(f"Error in chat_ask: {e}")
         return jsonify({'success': False, 'error': 'An error occurred while processing your question'})
+
 
 @app.route('/dashboard/trends')
 def trends_dashboard():
@@ -719,10 +690,11 @@ def trends_dashboard():
         # This is a static dashboard that doesn't require CSV data
         # But we'll check if user has uploaded data to show consistent navigation
         return render_template('trends_dashboard.html')
-    
+
     except Exception as e:
         flash(f'Error loading trends dashboard: {str(e)}')
         return redirect(url_for('index'))
+
 
 def analyze_inventory_data(df):
     """Analyze inventory data and calculate stock requirements and restock dates"""
@@ -892,6 +864,75 @@ def inventory_dashboard():
     except Exception as e:
         flash(f'Error loading inventory dashboard: {str(e)}')
         return redirect(url_for('index'))
+
+@app.route('/')
+def root():
+    return redirect(url_for('login'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        # Accept any credentials
+        if username and password:
+            session['logged_in'] = True
+            session['username'] = username
+            dest = request.args.get('next') or url_for('index')
+            return redirect(dest)
+        else:
+            flash('Please enter both username and password')
+
+    return render_template('login.html')
+
+@app.route('/home', methods=['GET', 'POST'])
+def index():
+    if not session.get('logged_in'):
+        return redirect(url_for('login', next=request.path))
+    if request.method == 'POST':
+        # Check if file was uploaded
+        if 'csv_file' not in request.files:
+            flash('No file selected')
+            return redirect(request.url)
+
+        file = request.files['csv_file']
+        date_filter = request.form.get('date_filter', 'all')
+        start_date = request.form.get('start_date', '')
+        end_date = request.form.get('end_date', '')
+
+        # Validate inputs
+        if file.filename == '':
+            flash('No file selected')
+            return redirect(request.url)
+
+        # Validate custom date range
+        if date_filter == 'custom':
+            if not start_date or not end_date:
+                flash('Please select both start and end dates for custom range')
+                return redirect(request.url)
+
+        if file and file.filename and allowed_file(file.filename):
+            # Save file to session for dashboard access
+            try:
+                temp_path = save_temp_file(file)
+                session['csv_file_path'] = temp_path
+                session['date_filter'] = date_filter
+                session['start_date'] = start_date
+                session['end_date'] = end_date
+
+                # Redirect to Executive Dashboard
+                return redirect(url_for('executive_dashboard'))
+
+            except Exception as e:
+                flash(f'Error processing file: {str(e)}')
+                return redirect(request.url)
+        else:
+            flash('Invalid file type. Please upload a CSV file.')
+            return redirect(request.url)
+
+    return render_template('upload.html')
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
