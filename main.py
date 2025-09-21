@@ -879,7 +879,7 @@ def login():
         if username and password:
             session['logged_in'] = True
             session['username'] = username
-            dest = request.args.get('next') or url_for('index')
+            dest = url_for('index')
             return redirect(dest)
         else:
             flash('Please enter both username and password')
