@@ -949,7 +949,8 @@ def load_demo_data():
         # Map demo types to file names
         demo_files = {
             'sample_sales_enhanced': 'sample_sales_enhanced.csv',
-            'synthetic_sales_100': 'synthetic_sales_100.csv'
+            'synthetic_sales_100': 'synthetic_sales_100.csv',
+            'supermarket_data': 'supermarket_data.csv'
         }
 
         if demo_type not in demo_files:
