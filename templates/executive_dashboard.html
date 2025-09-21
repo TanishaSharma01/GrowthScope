@@ -53,21 +53,41 @@
             height: 100%;
         }
 
-        /* For header sections in index.html and upload.html */
-        .header-logo {
-            width: 48px;
-            height: 48px;
-            flex-shrink: 0;
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            justify-content: space-around;
+            z-index: 1001;
         }
 
-        .header-logo svg {
+        .hamburger span {
+            display: block;
+            height: 3px;
             width: 100%;
-            height: 100%;
+            background: white;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(8px, -8px);
         }
 
         .nav-menu {
             display: flex;
             gap: 30px;
+            list-style: none;
         }
 
         .nav-item {
@@ -85,6 +105,20 @@
         .nav-item.active {
             background-color: rgba(255,255,255,0.3);
             font-weight: 600;
+        }
+
+        .nav-upload {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .nav-upload:hover {
+            background: rgba(255,255,255,0.3);
         }
 
         .container {
@@ -227,20 +261,6 @@
             border-bottom: none;
         }
 
-        .nav-upload {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
-            text-decoration: none;
-            transition: background-color 0.3s;
-        }
-
-        .nav-upload:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
         .no-data {
             text-align: center;
             color: #7f8c8d;
@@ -248,9 +268,39 @@
             font-style: italic;
         }
 
+        /* Mobile styles */
         @media (max-width: 768px) {
+            .hamburger {
+                display: flex;
+            }
+
             .nav-menu {
-                display: none;
+                position: fixed;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100vh;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 40px;
+                transition: left 0.3s ease;
+                z-index: 1000;
+            }
+
+            .nav-menu.active {
+                left: 0;
+            }
+
+            .nav-item {
+                font-size: 1.2rem;
+                padding: 15px 30px;
+            }
+
+            .nav-upload {
+                font-size: 1.2rem;
+                padding: 15px 30px;
             }
 
             .chart-grid {
@@ -262,8 +312,7 @@
             }
 
             .nav-container {
-                flex-direction: column;
-                gap: 15px;
+                padding: 0 20px;
             }
         }
     </style>
@@ -299,28 +348,35 @@
                                 <stop offset="100%" style="stop-color:#0F4F36;stop-opacity:1" />
                             </linearGradient>
                         </defs>
-                        
+
                         <!-- Growth bars -->
                         <rect x="15" y="70" width="8" height="20" fill="url(#barGradient1)" rx="1"/>
                         <rect x="28" y="55" width="8" height="35" fill="url(#barGradient2)" rx="1"/>
                         <rect x="41" y="40" width="8" height="50" fill="url(#barGradient3)" rx="1"/>
                         <rect x="54" y="25" width="8" height="65" fill="url(#barGradient1)" rx="1"/>
-                        
+
                         <!-- Curved arrow base -->
-                        <path d="M 15 85 Q 35 95 55 85 Q 75 75 85 45" 
+                        <path d="M 15 85 Q 35 95 55 85 Q 75 75 85 45"
                               stroke="url(#curveGradient)" stroke-width="6" fill="none" stroke-linecap="round"/>
-                        
+
                         <!-- Arrow head -->
-                        <path d="M 70 35 L 85 20 L 90 25 L 85 20 L 80 15" 
+                        <path d="M 70 35 L 85 20 L 90 25 L 85 20 L 80 15"
                               fill="url(#arrowGradient)" stroke="url(#arrowGradient)" stroke-width="2" stroke-linejoin="round"/>
-                        
+
                         <!-- Additional arrow head detail -->
                         <polygon points="85,20 90,15 95,20 85,30" fill="url(#arrowGradient)"/>
                     </svg>
                 </div>
                 GrowthScope
             </div>
-            <div class="nav-menu">
+
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div class="nav-menu" id="navMenu">
                 <a href="/dashboard/executive" class="nav-item active">Executive</a>
                 <a href="/dashboard/financial" class="nav-item">Financial</a>
                 <a href="/dashboard/growth" class="nav-item">Growth</a>
@@ -337,66 +393,48 @@
         <div class="page-header">
             <h1 class="page-title">Executive Snapshot</h1>
             <p class="page-subtitle">Your business health at a glance</p>
-            {% if insights.date_summary %}
-                <div class="period-indicator">
-                    📅 {{ insights.date_summary.period_name }} | {{ insights.date_summary.start_date }} to {{ insights.date_summary.end_date }}
-                </div>
-            {% endif %}
+            <div class="period-indicator">
+                📅 All Time | 2024-01-01 to 2024-12-31
+            </div>
         </div>
 
         <!-- KPI Cards -->
         <div class="kpi-grid">
             <div class="kpi-card">
-                <div class="kpi-value">${{ "%.0f"|format(insights.total_sales) }}</div>
+                <div class="kpi-value">$125,430</div>
                 <div class="kpi-label">Total Revenue</div>
                 <div class="kpi-change positive">📈 Primary metric</div>
             </div>
 
             <div class="kpi-card">
-                <div class="kpi-value">${{ "%.0f"|format(insights.total_profit) }}</div>
+                <div class="kpi-value">$45,230</div>
                 <div class="kpi-label">Total Profit</div>
-                <div class="kpi-change {% if insights.profit_margin >= 20 %}positive{% else %}negative{% endif %}">
-                    {{ "%.1f"|format(insights.profit_margin) }}% margin
-                </div>
+                <div class="kpi-change positive">36.1% margin</div>
             </div>
 
-            {% if insights.transaction_metrics %}
             <div class="kpi-card">
-                <div class="kpi-value">{{ insights.transaction_metrics.total_receipts }}</div>
+                <div class="kpi-value">234</div>
                 <div class="kpi-label">Total Transactions</div>
                 <div class="kpi-change positive">🧾 Customer orders</div>
             </div>
 
             <div class="kpi-card">
-                <div class="kpi-value">${{ "%.0f"|format(insights.transaction_metrics.avg_receipt_value) }}</div>
+                <div class="kpi-value">$536</div>
                 <div class="kpi-label">Avg Transaction Value</div>
                 <div class="kpi-change positive">💰 Per receipt</div>
             </div>
 
             <div class="kpi-card">
-                <div class="kpi-value">{{ "%.1f"|format(insights.transaction_metrics.avg_items_per_receipt) }}</div>
+                <div class="kpi-value">2.3</div>
                 <div class="kpi-label">Items per Transaction</div>
                 <div class="kpi-change positive">📦 Basket size</div>
             </div>
 
             <div class="kpi-card">
-                <div class="kpi-value">${{ "%.0f"|format(insights.transaction_metrics.largest_receipt) }}</div>
+                <div class="kpi-value">$1,250</div>
                 <div class="kpi-label">Largest Transaction</div>
                 <div class="kpi-change positive">🏆 Peak order</div>
             </div>
-            {% else %}
-            <div class="kpi-card">
-                <div class="kpi-value">{{ insights.total_quantity }}</div>
-                <div class="kpi-label">Items Sold</div>
-                <div class="kpi-change positive">📦 Total units</div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-value">${{ "%.0f"|format(insights.avg_revenue_per_item) }}</div>
-                <div class="kpi-label">Avg Revenue/Item</div>
-                <div class="kpi-change positive">💰 Per unit value</div>
-            </div>
-            {% endif %}
         </div>
 
         <!-- Charts Section -->
@@ -421,217 +459,218 @@
             <h3 class="insight-title">📊 Key Business Insights</h3>
             <ul class="insight-list">
                 <li class="insight-item">
-                    <strong>Top Performer:</strong> {{ insights.top_selling_product }} generated ${{ "%.0f"|format(insights.top_product_revenue) }} in revenue
+                    <strong>Top Performer:</strong> iPhone 15 Pro generated $25,430 in revenue
                 </li>
                 <li class="insight-item">
-                    <strong>Profit Health:</strong>
-                    {% if insights.profit_margin >= 30 %}
-                        Excellent profit margin of {{ insights.profit_margin }}% - well above industry standards
-                    {% elif insights.profit_margin >= 15 %}
-                        Good profit margin of {{ insights.profit_margin }}% - room for optimization
-                    {% elif insights.profit_margin >= 5 %}
-                        Moderate profit margin of {{ insights.profit_margin }}% - consider cost reduction strategies
-                    {% else %}
-                        Low profit margin of {{ insights.profit_margin }}% - urgent attention needed
-                    {% endif %}
+                    <strong>Profit Health:</strong> Excellent profit margin of 36.1% - well above industry standards
                 </li>
                 <li class="insight-item">
-                    <strong>Sales Volume:</strong> {{ insights.total_quantity }} units sold with average value of ${{ "%.0f"|format(insights.avg_revenue_per_item) }} per item
+                    <strong>Sales Volume:</strong> 1,247 units sold with average value of $101 per item
                 </li>
-                {% if insights.brand_summary|length > 1 %}
                 <li class="insight-item">
-                    <strong>Brand Portfolio:</strong> Operating {{ insights.brand_summary|length }} brands across your product range
+                    <strong>Brand Portfolio:</strong> Operating 8 brands across your product range
                 </li>
-                {% endif %}
-                {% if insights.category_summary|length > 1 %}
                 <li class="insight-item">
-                    <strong>Product Mix:</strong> {{ insights.category_summary|length }} product categories contributing to revenue
+                    <strong>Product Mix:</strong> 5 product categories contributing to revenue
                 </li>
-                {% endif %}
-                {% if insights.monthly_trends and insights.monthly_trends|length > 1 %}
                 <li class="insight-item">
-                    <strong>Monthly Performance:</strong> Analysis covers {{ insights.monthly_trends|length }} months of business activity
+                    <strong>Monthly Performance:</strong> Analysis covers 12 months of business activity
                 </li>
-                {% endif %}
             </ul>
         </div>
     </div>
 
     <script>
+        // Hamburger menu toggle
+        const hamburger = document.getElementById('hamburger');
+        const navMenu = document.getElementById('navMenu');
+
+        hamburger.addEventListener('click', function() {
+            hamburger.classList.toggle('active');
+            navMenu.classList.toggle('active');
+        });
+
+        // Close menu when clicking on a nav item
+        const navItems = document.querySelectorAll('.nav-item, .nav-upload');
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                navMenu.classList.remove('active');
+            });
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!hamburger.contains(event.target) && !navMenu.contains(event.target)) {
+                hamburger.classList.remove('active');
+                navMenu.classList.remove('active');
+            }
+        });
+
+        // Sample chart data
+        const monthlyData = [
+            {Month_Label: 'Jan 2024', Revenue: 8500, Profit: 3400, Median_Ticket_Cost: 125},
+            {Month_Label: 'Feb 2024', Revenue: 9200, Profit: 3680, Median_Ticket_Cost: 135},
+            {Month_Label: 'Mar 2024', Revenue: 11200, Profit: 4480, Median_Ticket_Cost: 142},
+            {Month_Label: 'Apr 2024', Revenue: 10800, Profit: 4320, Median_Ticket_Cost: 138},
+            {Month_Label: 'May 2024', Revenue: 12400, Profit: 4960, Median_Ticket_Cost: 155}
+        ];
+
         // Monthly Revenue, Profit and Median Ticket Cost Chart
         const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-        const monthlyData = {{ insights.monthly_trends | tojson }};
 
-        console.log('Monthly Data with Median Ticket Cost:', monthlyData);
-
-        if (monthlyData && monthlyData.length > 0) {
-            new Chart(revenueCtx, {
-                type: 'line',
-                data: {
-                    labels: monthlyData.map(d => d.Month_Label || d.Month_str),
-                    datasets: [{
-                        label: 'Monthly Revenue',
-                        data: monthlyData.map(d => d.Revenue),
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        borderWidth: 3,
-                        fill: false,
-                        tension: 0.4,
-                        pointBackgroundColor: '#667eea',
-                        pointBorderColor: '#667eea',
-                        pointBorderWidth: 2,
-                        pointRadius: 6,
-                        yAxisID: 'y'
-                    }, {
-                        label: 'Monthly Profit',
-                        data: monthlyData.map(d => d.Profit),
-                        borderColor: '#28a745',
-                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                        borderWidth: 3,
-                        fill: false,
-                        tension: 0.4,
-                        pointBackgroundColor: '#28a745',
-                        pointBorderColor: '#28a745',
-                        pointBorderWidth: 2,
-                        pointRadius: 6,
-                        yAxisID: 'y'
-                    }, {
-                        label: 'Median Ticket Cost',
-                        data: monthlyData.map(d => d.Median_Ticket_Cost || 0),
-                        borderColor: '#ff6b6b',
-                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                        borderWidth: 2,
-                        fill: false,
-                        tension: 0.4,
-                        pointBackgroundColor: '#ff6b6b',
-                        pointBorderColor: '#ff6b6b',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        yAxisID: 'y1'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            type: 'linear',
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: monthlyData.map(d => d.Month_Label),
+                datasets: [{
+                    label: 'Monthly Revenue',
+                    data: monthlyData.map(d => d.Revenue),
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#667eea',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    yAxisID: 'y'
+                }, {
+                    label: 'Monthly Profit',
+                    data: monthlyData.map(d => d.Profit),
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4,
+                    pointBackgroundColor: '#28a745',
+                    pointBorderColor: '#28a745',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    yAxisID: 'y'
+                }, {
+                    label: 'Median Ticket Cost',
+                    data: monthlyData.map(d => d.Median_Ticket_Cost),
+                    borderColor: '#ff6b6b',
+                    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    pointBackgroundColor: '#ff6b6b',
+                    pointBorderColor: '#ff6b6b',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        beginAtZero: true,
+                        title: {
                             display: true,
-                            position: 'left',
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Revenue & Profit ($)'
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return '$' + value.toLocaleString();
-                                }
-                            },
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.1)'
+                            text: 'Revenue & Profit ($)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
                             }
                         },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Median Ticket Cost ($)'
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return '$' + value.toLocaleString();
-                                }
-                            },
-                            grid: {
-                                drawOnChartArea: false,
-                            },
-                        },
-                        x: {
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.1)'
-                            }
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
                         }
                     },
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                usePointStyle: true,
-                                padding: 20
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Median Ticket Cost ($)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
                             }
                         },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.dataset.label;
-                                    const value = context.parsed.y;
-                                    return label + ': $' + value.toLocaleString();
-                                }
-                            }
-                        }
+                        grid: {
+                            drawOnChartArea: false,
+                        },
                     },
-                    interaction: {
-                        mode: 'nearest',
-                        axis: 'x',
-                        intersect: false
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
                     }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label;
+                                const value = context.parsed.y;
+                                return label + ': $' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
                 }
-            });
-        } else {
-            // Show no data message for revenue chart
-            revenueCtx.font = "16px Arial";
-            revenueCtx.fillStyle = "#7f8c8d";
-            revenueCtx.textAlign = "center";
-            revenueCtx.fillText("No monthly trend data available", revenueCtx.canvas.width/2, revenueCtx.canvas.height/2);
-        }
+            }
+        });
 
         // Revenue vs Cost Chart
         const revenueVsCostCtx = document.getElementById('revenueVsCostChart').getContext('2d');
 
-        if ({{ insights.total_sales }} > 0 && {{ insights.total_cost }} > 0) {
-            new Chart(revenueVsCostCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Revenue', 'Cost'],
-                    datasets: [{
-                        data: [{{ insights.total_sales }}, {{ insights.total_cost }}],
-                        backgroundColor: ['#667eea', '#ff6b6b'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.parsed;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = ((value / total) * 100).toFixed(1);
-                                    return context.label + ': $' + value.toLocaleString() + ' (' + percentage + '%)';
-                                }
+        new Chart(revenueVsCostCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Revenue', 'Cost'],
+                datasets: [{
+                    data: [125430, 80200],
+                    backgroundColor: ['#667eea', '#ff6b6b'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return context.label + ': $' + value.toLocaleString() + ' (' + percentage + '%)';
                             }
                         }
                     }
                 }
-            });
-        } else {
-            // Show no data message for revenue vs cost chart
-            revenueVsCostCtx.font = "16px Arial";
-            revenueVsCostCtx.fillStyle = "#7f8c8d";
-            revenueVsCostCtx.textAlign = "center";
-            revenueVsCostCtx.fillText("No revenue/cost data available", revenueVsCostCtx.canvas.width/2, revenueVsCostCtx.canvas.height/2);
-        }
+            }
+        });
     </script>
 </body>
 </html>

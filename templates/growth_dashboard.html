@@ -70,6 +70,34 @@
             gap: 30px;
         }
 
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: 0.3s;
+            border-radius: 2px;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+        }
+
         .nav-item {
             color: white;
             text-decoration: none;
@@ -330,8 +358,55 @@
         }
 
         @media (max-width: 768px) {
+            .hamburger {
+                display: flex;
+            }
+
             .nav-menu {
-                display: none;
+                position: fixed;
+                top: 0;
+                left: -100%;
+                width: 80%;
+                max-width: 300px;
+                height: 100vh;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                flex-direction: column;
+                justify-content: flex-start;
+                align-items: flex-start;
+                padding: 80px 20px 20px;
+                transition: left 0.3s ease;
+                z-index: 1000;
+                gap: 10px;
+            }
+
+            .nav-menu.active {
+                left: 0;
+            }
+
+            .nav-item, .nav-upload {
+                width: 100%;
+                text-align: left;
+                padding: 15px 20px;
+                border-radius: 8px;
+                font-size: 16px;
+            }
+
+            .nav-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.3s ease, visibility 0.3s ease;
+            }
+
+            .nav-overlay.active {
+                opacity: 1;
+                visibility: visible;
             }
 
             .chart-grid {
@@ -351,8 +426,9 @@
             }
 
             .nav-container {
-                flex-direction: column;
-                gap: 15px;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
             }
         }
     </style>
@@ -360,6 +436,7 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar">
+        <div class="nav-overlay" id="navOverlay"></div>
         <div class="nav-container">
             <div class="nav-brand">
                 <div class="logo">
@@ -388,28 +465,35 @@
                                 <stop offset="100%" style="stop-color:#0F4F36;stop-opacity:1" />
                             </linearGradient>
                         </defs>
-                        
+
                         <!-- Growth bars -->
                         <rect x="15" y="70" width="8" height="20" fill="url(#barGradient1)" rx="1"/>
                         <rect x="28" y="55" width="8" height="35" fill="url(#barGradient2)" rx="1"/>
                         <rect x="41" y="40" width="8" height="50" fill="url(#barGradient3)" rx="1"/>
                         <rect x="54" y="25" width="8" height="65" fill="url(#barGradient1)" rx="1"/>
-                        
+
                         <!-- Curved arrow base -->
-                        <path d="M 15 85 Q 35 95 55 85 Q 75 75 85 45" 
+                        <path d="M 15 85 Q 35 95 55 85 Q 75 75 85 45"
                               stroke="url(#curveGradient)" stroke-width="6" fill="none" stroke-linecap="round"/>
-                        
+
                         <!-- Arrow head -->
-                        <path d="M 70 35 L 85 20 L 90 25 L 85 20 L 80 15" 
+                        <path d="M 70 35 L 85 20 L 90 25 L 85 20 L 80 15"
                               fill="url(#arrowGradient)" stroke="url(#arrowGradient)" stroke-width="2" stroke-linejoin="round"/>
-                        
+
                         <!-- Additional arrow head detail -->
                         <polygon points="85,20 90,15 95,20 85,30" fill="url(#arrowGradient)"/>
                     </svg>
                 </div>
                 GrowthScope
             </div>
-            <div class="nav-menu">
+
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div class="nav-menu" id="navMenu">
                 <a href="/dashboard/executive" class="nav-item">Executive</a>
                 <a href="/dashboard/financial" class="nav-item">Financial</a>
                 <a href="/dashboard/growth" class="nav-item active">Growth</a>
@@ -426,52 +510,36 @@
         <div class="page-header">
             <h1 class="page-title">Growth & Opportunities</h1>
             <p class="page-subtitle">Customer insights and future growth opportunities</p>
-            {% if insights.date_summary %}
-                <div class="period-indicator">
-                    📅 {{ insights.date_summary.period_name }} | {{ insights.date_summary.start_date }} to {{ insights.date_summary.end_date }}
-                </div>
-            {% endif %}
+            <div class="period-indicator">
+                📅 Sample Period | Jan 2024 to Dec 2024
+            </div>
         </div>
 
         <!-- Growth Metrics -->
         <div class="growth-metrics">
             <div class="growth-card">
-                <div class="growth-value">{{ insights.product_aggregates|length }}</div>
+                <div class="growth-value">247</div>
                 <div class="growth-label">Product Portfolio</div>
                 <div class="growth-insight">Total unique products sold</div>
             </div>
 
             <div class="growth-card">
-                <div class="growth-value">{{ insights.brand_summary|length }}</div>
+                <div class="growth-value">12</div>
                 <div class="growth-label">Brand Portfolio</div>
                 <div class="growth-insight">Active brand count</div>
             </div>
 
-            {% if insights.transaction_metrics %}
             <div class="growth-card">
-                <div class="growth-value">{{ insights.transaction_metrics.total_receipts }}</div>
+                <div class="growth-value">8,543</div>
                 <div class="growth-label">Customer Transactions</div>
                 <div class="growth-insight">Total completed orders</div>
             </div>
 
             <div class="growth-card">
-                <div class="growth-value">{{ "%.1f"|format(insights.transaction_metrics.avg_items_per_receipt) }}</div>
+                <div class="growth-value">3.2</div>
                 <div class="growth-label">Basket Size</div>
                 <div class="growth-insight">Items per transaction</div>
             </div>
-            {% else %}
-            <div class="growth-card">
-                <div class="growth-value">{{ insights.category_summary|length }}</div>
-                <div class="growth-label">Market Segments</div>
-                <div class="growth-insight">Product categories</div>
-            </div>
-
-            <div class="growth-card">
-                <div class="growth-value">${{ "%.0f"|format((insights.total_sales / insights.date_summary.unique_dates) if insights.date_summary.unique_dates > 0 else 0) }}</div>
-                <div class="growth-label">Daily Average Revenue</div>
-                <div class="growth-insight">Average sales per day</div>
-            </div>
-            {% endif %}
         </div>
 
         <!-- Charts Section -->
@@ -492,62 +560,86 @@
         </div>
 
         <!-- Category Performance -->
-        {% if insights.category_summary and insights.category_summary|length > 1 %}
         <div class="category-performance">
             <h3 class="opportunity-title">Category Performance Overview</h3>
             <div class="category-grid">
-                {% for category, data in insights.category_summary.items() %}
-                    {% if category != 'Unknown' %}
-                    <div class="category-item">
-                        <div class="category-name">{{ category }}</div>
-                        <div class="category-stats">
-                            <div class="category-revenue">${{ "%.0f"|format(data.Revenue) }}</div>
-                            <div class="category-margin">{{ "%.1f"|format(data.Margin) }}%</div>
-                        </div>
+                <div class="category-item">
+                    <div class="category-name">Electronics</div>
+                    <div class="category-stats">
+                        <div class="category-revenue">$125K</div>
+                        <div class="category-margin">22.5%</div>
                     </div>
-                    {% endif %}
-                {% endfor %}
+                </div>
+                <div class="category-item">
+                    <div class="category-name">Accessories</div>
+                    <div class="category-stats">
+                        <div class="category-revenue">$87K</div>
+                        <div class="category-margin">18.3%</div>
+                    </div>
+                </div>
+                <div class="category-item">
+                    <div class="category-name">Software</div>
+                    <div class="category-stats">
+                        <div class="category-revenue">$65K</div>
+                        <div class="category-margin">45.2%</div>
+                    </div>
+                </div>
+                <div class="category-item">
+                    <div class="category-name">Services</div>
+                    <div class="category-stats">
+                        <div class="category-revenue">$43K</div>
+                        <div class="category-margin">35.8%</div>
+                    </div>
+                </div>
             </div>
         </div>
-        {% endif %}
 
         <!-- Growth Opportunities -->
         <div class="opportunity-section">
             <div class="opportunity-card">
                 <h3 class="opportunity-title">Top Growth Opportunities</h3>
                 <ul class="opportunity-list">
-                    {% set top_products = insights.product_aggregates|sort(attribute='Profit', reverse=true) %}
-                    {% for product in top_products[:5] %}
                     <li class="opportunity-item">
-                        <span class="opportunity-label">{{ product.Product }}</span>
-                        <span class="opportunity-value">${{ "%.0f"|format(product.Profit) }}</span>
+                        <span class="opportunity-label">Premium Laptop Pro</span>
+                        <span class="opportunity-value">$28,500</span>
                     </li>
-                    {% endfor %}
+                    <li class="opportunity-item">
+                        <span class="opportunity-label">Wireless Headphones Elite</span>
+                        <span class="opportunity-value">$15,200</span>
+                    </li>
+                    <li class="opportunity-item">
+                        <span class="opportunity-label">Smart Watch Series X</span>
+                        <span class="opportunity-value">$12,800</span>
+                    </li>
+                    <li class="opportunity-item">
+                        <span class="opportunity-label">Gaming Console Ultimate</span>
+                        <span class="opportunity-value">$11,400</span>
+                    </li>
+                    <li class="opportunity-item">
+                        <span class="opportunity-label">Tablet Pro Max</span>
+                        <span class="opportunity-value">$9,600</span>
+                    </li>
                 </ul>
             </div>
 
             <div class="opportunity-card">
                 <h3 class="opportunity-title">Expansion Potential</h3>
                 <ul class="opportunity-list">
-                    {% if insights.brand_summary|length > 1 %}
                     <li class="opportunity-item">
                         <span class="opportunity-label">Multi-Brand Strategy</span>
-                        <span class="opportunity-value">{{ insights.brand_summary|length }} brands</span>
+                        <span class="opportunity-value">12 brands</span>
                     </li>
-                    {% endif %}
-                    {% if insights.category_summary|length > 1 %}
                     <li class="opportunity-item">
                         <span class="opportunity-label">Category Diversification</span>
-                        <span class="opportunity-value">{{ insights.category_summary|length }} categories</span>
+                        <span class="opportunity-value">8 categories</span>
                     </li>
-                    {% endif %}
                     <li class="opportunity-item">
                         <span class="opportunity-label">Average Order Value</span>
-                        <span class="opportunity-value">${{ "%.0f"|format(insights.avg_revenue_per_item) }}</span>
+                        <span class="opportunity-value">$142</span>
                     </li>
                     <li class="opportunity-item">
                         <span class="opportunity-label">Market Coverage</span>
-                        <span class="opportunity-value">{{ insights.product_aggregates|length }} products</span>
+                        <span class="opportunity-value">247 products</span>
                     </li>
                 </ul>
             </div>
@@ -560,16 +652,15 @@
             <div class="recommendation-item">
                 <div class="recommendation-title">Focus on High-Margin Products</div>
                 <div class="recommendation-desc">
-                    Your top-performing product "{{ insights.top_selling_product }}" generates ${{ "%.0f"|format(insights.top_product_revenue) }} in revenue.
+                    Your top-performing product "Premium Laptop Pro" generates $28,500 in revenue.
                     Consider increasing inventory and marketing focus on your most profitable items.
                 </div>
             </div>
 
-            {% if insights.transaction_metrics %}
             <div class="recommendation-item">
                 <div class="recommendation-title">Optimize Transaction Value</div>
                 <div class="recommendation-desc">
-                    Current average transaction value is ${{ "%.0f"|format(insights.transaction_metrics.avg_receipt_value) }} with {{ "%.1f"|format(insights.transaction_metrics.avg_items_per_receipt) }} items per basket.
+                    Current average transaction value is $142 with 3.2 items per basket.
                     Consider bundle deals or cross-selling strategies to increase basket size and transaction value.
                 </div>
             </div>
@@ -577,40 +668,23 @@
             <div class="recommendation-item">
                 <div class="recommendation-title">Learn from High-Value Transactions</div>
                 <div class="recommendation-desc">
-                    Your largest transaction was ${{ "%.0f"|format(insights.transaction_metrics.largest_receipt) }}.
+                    Your largest transaction was $2,450.
                     Analyze what drove this high-value purchase and replicate those conditions to encourage similar transaction sizes.
                 </div>
             </div>
-            {% endif %}
 
-            {% if insights.profit_margin < 20 %}
-            <div class="recommendation-item">
-                <div class="recommendation-title">Improve Profit Margins</div>
-                <div class="recommendation-desc">
-                    Current profit margin of {{ insights.profit_margin }}% is below optimal levels.
-                    Review pricing strategy and cost optimization opportunities to improve profitability.
-                </div>
-            </div>
-            {% endif %}
-
-            {% if insights.category_summary|length > 2 %}
             <div class="recommendation-item">
                 <div class="recommendation-title">Leverage Category Diversification</div>
                 <div class="recommendation-desc">
-                    You operate across {{ insights.category_summary|length }} categories.
+                    You operate across 8 categories.
                     Analyze cross-selling opportunities between categories to increase average order value.
                 </div>
             </div>
-            {% endif %}
 
             <div class="recommendation-item">
                 <div class="recommendation-title">Scale Successful Patterns</div>
                 <div class="recommendation-desc">
-                    {% if insights.transaction_metrics %}
-                    With {{ insights.transaction_metrics.total_receipts }} transactions and ${{ "%.0f"|format(insights.transaction_metrics.avg_receipt_value) }} average transaction value,
-                    {% else %}
-                    With {{ insights.total_quantity }} units sold and ${{ "%.0f"|format(insights.avg_revenue_per_item) }} average revenue per item,
-                    {% endif %}
+                    With 8,543 transactions and $142 average transaction value,
                     focus on scaling your proven business model to new markets or customer segments.
                 </div>
             </div>
@@ -618,15 +692,55 @@
     </div>
 
     <script>
+        // Hamburger menu functionality
+        const hamburger = document.getElementById('hamburger');
+        const navMenu = document.getElementById('navMenu');
+        const navOverlay = document.getElementById('navOverlay');
+
+        function toggleMenu() {
+            hamburger.classList.toggle('active');
+            navMenu.classList.toggle('active');
+            navOverlay.classList.toggle('active');
+            document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : '';
+        }
+
+        hamburger.addEventListener('click', toggleMenu);
+        navOverlay.addEventListener('click', toggleMenu);
+
+        // Close menu when clicking on a nav item (mobile)
+        navMenu.addEventListener('click', (e) => {
+            if (e.target.classList.contains('nav-item') || e.target.classList.contains('nav-upload')) {
+                toggleMenu();
+            }
+        });
+
+        // Sample data for demonstration
+        const sampleProductData = [
+            { Product: 'Premium Laptop Pro', Revenue: 28500, Margin_Pct: 25.5, Quantity: 45 },
+            { Product: 'Wireless Headphones Elite', Revenue: 15200, Margin_Pct: 18.3, Quantity: 120 },
+            { Product: 'Smart Watch Series X', Revenue: 12800, Margin_Pct: 22.1, Quantity: 85 },
+            { Product: 'Gaming Console Ultimate', Revenue: 11400, Margin_Pct: 15.8, Quantity: 32 },
+            { Product: 'Tablet Pro Max', Revenue: 9600, Margin_Pct: 28.4, Quantity: 58 },
+            { Product: 'Bluetooth Speaker Pro', Revenue: 7800, Margin_Pct: 32.1, Quantity: 95 },
+            { Product: 'Smartphone Elite', Revenue: 6500, Margin_Pct: 19.7, Quantity: 28 },
+            { Product: 'Wireless Charger', Revenue: 4200, Margin_Pct: 41.5, Quantity: 140 }
+        ];
+
+        const sampleCategoryData = {
+            'Electronics': { Revenue: 125000 },
+            'Accessories': { Revenue: 87000 },
+            'Software': { Revenue: 65000 },
+            'Services': { Revenue: 43000 }
+        };
+
         // Product Portfolio Chart
         const portfolioCtx = document.getElementById('portfolioChart').getContext('2d');
-        const productData = {{ insights.product_aggregates | tojson }};
 
         // Create bubble chart data
-        const bubbleData = productData.map(product => ({
+        const bubbleData = sampleProductData.map(product => ({
             x: product.Revenue,
             y: product.Margin_Pct,
-            r: Math.sqrt(product.Quantity) / 2, // Size based on quantity
+            r: Math.sqrt(product.Quantity) / 2,
             label: product.Product
         }));
 
@@ -681,10 +795,9 @@
 
         // Category Revenue Distribution Chart
         const categoryCtx = document.getElementById('categoryRevenueChart').getContext('2d');
-        const categoryData = {{ insights.category_summary | tojson }};
 
-        const categoryLabels = Object.keys(categoryData).filter(cat => cat !== 'Unknown');
-        const categoryRevenues = categoryLabels.map(cat => categoryData[cat].Revenue);
+        const categoryLabels = Object.keys(sampleCategoryData);
+        const categoryRevenues = categoryLabels.map(cat => sampleCategoryData[cat].Revenue);
 
         new Chart(categoryCtx, {
             type: 'doughnut',
