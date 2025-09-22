@@ -22,7 +22,6 @@
             color: white;
             padding: 15px 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: relative;
         }
 
         .nav-container {
@@ -40,7 +39,6 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            z-index: 1001;
         }
 
         .logo {
@@ -54,10 +52,21 @@
             height: 100%;
         }
 
+        /* For header sections in index.html and upload.html */
+        .header-logo {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+        }
+
+        .header-logo svg {
+            width: 100%;
+            height: 100%;
+        }
+
         .nav-menu {
             display: flex;
-            gap: 20px;
-            align-items: center;
+            gap: 30px;
         }
 
         .nav-item {
@@ -66,7 +75,6 @@
             padding: 8px 16px;
             border-radius: 6px;
             transition: background-color 0.3s;
-            white-space: nowrap;
         }
 
         .nav-item:hover {
@@ -76,48 +84,6 @@
         .nav-item.active {
             background-color: rgba(255,255,255,0.3);
             font-weight: 600;
-        }
-
-        .nav-upload {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
-            text-decoration: none;
-            transition: background-color 0.3s;
-        }
-
-        .nav-upload:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        .hamburger {
-            display: none;
-            flex-direction: column;
-            cursor: pointer;
-            z-index: 1001;
-        }
-
-        .hamburger span {
-            width: 25px;
-            height: 3px;
-            background: white;
-            margin: 3px 0;
-            transition: 0.3s;
-            border-radius: 2px;
-        }
-
-        .hamburger.active span:nth-child(1) {
-            transform: rotate(-45deg) translate(-5px, 6px);
-        }
-
-        .hamburger.active span:nth-child(2) {
-            opacity: 0;
-        }
-
-        .hamburger.active span:nth-child(3) {
-            transform: rotate(45deg) translate(-5px, -6px);
         }
 
         .container {
@@ -159,8 +125,7 @@
             display: grid;
             grid-template-columns: 1fr 300px;
             gap: 20px;
-            height: calc(100vh - 250px);
-            min-height: 600px;
+            height: calc(100vh - 200px);
         }
 
         .chat-main {
@@ -331,131 +296,41 @@
             color: #2c3e50;
         }
 
-        /* Mobile Styles */
+        .nav-upload {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .nav-upload:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
         @media (max-width: 768px) {
-            .hamburger {
-                display: flex;
-            }
-
             .nav-menu {
-                position: fixed;
-                top: 0;
-                left: -100%;
-                width: 80%;
-                max-width: 300px;
-                height: 100vh;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                flex-direction: column;
-                justify-content: flex-start;
-                align-items: flex-start;
-                padding: 80px 20px 20px;
-                transition: left 0.3s ease;
-                z-index: 1000;
-                gap: 10px;
-            }
-
-            .nav-menu.active {
-                left: 0;
-            }
-
-            .nav-item, .nav-upload {
-                width: 100%;
-                text-align: left;
-                padding: 15px 20px;
-                border-radius: 8px;
-                font-size: 16px;
-            }
-
-            .nav-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 999;
-                opacity: 0;
-                visibility: hidden;
-                transition: opacity 0.3s ease, visibility 0.3s ease;
-            }
-
-            .nav-overlay.active {
-                opacity: 1;
-                visibility: visible;
+                display: none;
             }
 
             .chat-container {
                 grid-template-columns: 1fr;
                 height: auto;
-                min-height: 500px;
             }
 
             .chat-main {
                 height: 500px;
             }
 
-            .chat-sidebar {
-                order: -1;
-                margin-bottom: 20px;
-            }
-
-            .message {
-                max-width: 85%;
-            }
-
-            .page-title {
-                font-size: 1.7rem;
-            }
-
-            .page-header {
-                padding: 20px;
-            }
-
-            .container {
-                padding: 15px;
-            }
-
-            .period-indicator {
-                font-size: 0.9rem;
-                padding: 8px 15px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .nav-brand {
-                font-size: 1.3rem;
-            }
-
-            .logo {
-                width: 30px;
-                height: 30px;
-            }
-
-            .page-title {
-                font-size: 1.5rem;
-            }
-
-            .chat-main {
-                height: 400px;
-            }
-
-            .message {
-                max-width: 90%;
-                padding: 12px;
-            }
-
-            .chat-input-form {
+            .nav-container {
                 flex-direction: column;
-                gap: 10px;
+                gap: 15px;
             }
 
-            .chat-send-btn {
-                border-radius: 8px;
-            }
-
-            .quick-question {
-                font-size: 0.85rem;
-                padding: 10px;
+            .message {
+                max-width: 95%;
             }
         }
     </style>
@@ -463,12 +338,12 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar">
-        <div class="nav-overlay" id="navOverlay"></div>
         <div class="nav-container">
             <div class="nav-brand">
                 <div class="logo">
                     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                         <defs>
+                            <!-- Gradient definitions -->
                             <linearGradient id="barGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
                                 <stop offset="0%" style="stop-color:#7ED321;stop-opacity:1" />
                                 <stop offset="100%" style="stop-color:#4A90E2;stop-opacity:1" />
@@ -491,25 +366,28 @@
                                 <stop offset="100%" style="stop-color:#0F4F36;stop-opacity:1" />
                             </linearGradient>
                         </defs>
+
+                        <!-- Growth bars -->
                         <rect x="15" y="70" width="8" height="20" fill="url(#barGradient1)" rx="1"/>
                         <rect x="28" y="55" width="8" height="35" fill="url(#barGradient2)" rx="1"/>
                         <rect x="41" y="40" width="8" height="50" fill="url(#barGradient3)" rx="1"/>
                         <rect x="54" y="25" width="8" height="65" fill="url(#barGradient1)" rx="1"/>
+
+                        <!-- Curved arrow base -->
                         <path d="M 15 85 Q 35 95 55 85 Q 75 75 85 45"
                               stroke="url(#curveGradient)" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+                        <!-- Arrow head -->
+                        <path d="M 70 35 L 85 20 L 90 25 L 85 20 L 80 15"
+                              fill="url(#arrowGradient)" stroke="url(#arrowGradient)" stroke-width="2" stroke-linejoin="round"/>
+
+                        <!-- Additional arrow head detail -->
                         <polygon points="85,20 90,15 95,20 85,30" fill="url(#arrowGradient)"/>
                     </svg>
                 </div>
                 GrowthScope
             </div>
-
-            <div class="hamburger" id="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-
-            <div class="nav-menu" id="navMenu">
+            <div class="nav-menu">
                 <a href="/dashboard/executive" class="nav-item">Executive</a>
                 <a href="/dashboard/financial" class="nav-item">Financial</a>
                 <a href="/dashboard/growth" class="nav-item">Growth</a>
@@ -619,29 +497,6 @@
     </div>
 
     <script>
-        // Hamburger menu functionality
-        const hamburger = document.getElementById('hamburger');
-        const navMenu = document.getElementById('navMenu');
-        const navOverlay = document.getElementById('navOverlay');
-
-        function toggleMenu() {
-            hamburger.classList.toggle('active');
-            navMenu.classList.toggle('active');
-            navOverlay.classList.toggle('active');
-            document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : '';
-        }
-
-        hamburger.addEventListener('click', toggleMenu);
-        navOverlay.addEventListener('click', toggleMenu);
-
-        // Close menu when clicking on a nav item (mobile)
-        navMenu.addEventListener('click', (e) => {
-            if (e.target.classList.contains('nav-item') || e.target.classList.contains('nav-upload')) {
-                toggleMenu();
-            }
-        });
-
-        // Chat functionality
         let isLoading = false;
 
         function addMessage(content, type) {

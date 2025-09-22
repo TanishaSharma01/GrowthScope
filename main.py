@@ -12,7 +12,7 @@ import numpy as np
 from datetime import datetime, timedelta
 
 # Initialize Gemini client with error handling
-GEMINI_API_KEY = "AIzaSyD27VX_Kjr8wmfw3icVwxtMWTLgGc5yw3Q"
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', "AIzaSyD27VX_Kjr8wmfw3icVwxtMWTLgGc5yw3Q")
 if not GEMINI_API_KEY:
     print("WARNING: GEMINI_API_KEY not found in environment variables!")
     gemini_client = None
@@ -538,6 +538,260 @@ def save_temp_file(file):
     temp_file.close()
     return temp_file.name
 
+
+def analyze_inventory_data(df):
+    """Analyze inventory data and calculate stock requirements and restock dates"""
+    try:
+        if df.empty:
+            return None
+
+        # Check if we have stock data
+        if 'Stock_For_Month' not in df.columns:
+            return None
+
+        # Get the latest month's data for current stock levels
+        df['Date'] = pd.to_datetime(df['Date'])
+        latest_month = df['Date'].max().to_period('M')
+        current_month_data = df[df['Date'].dt.to_period('M') == latest_month]
+
+        # Calculate monthly sales velocity for each product
+        monthly_sales = df.groupby(['Product', df['Date'].dt.to_period('M')])['Quantity'].sum().reset_index()
+        monthly_sales.columns = ['Product', 'Month', 'Monthly_Sales']
+
+        # Calculate average monthly sales and stock requirements
+        avg_monthly_sales = monthly_sales.groupby('Product')['Monthly_Sales'].mean().reset_index()
+        avg_monthly_sales.columns = ['Product', 'Avg_Monthly_Sales']
+
+        # Get current stock levels (latest month)
+        current_stock = current_month_data.groupby('Product').agg({
+            'Stock_For_Month': 'first',  # Assuming stock is same across all entries for a product in a month
+            'Cost_Price': 'mean',
+            'Selling_Price': 'mean'
+        }).reset_index()
+
+        # Merge sales velocity with current stock
+        inventory_analysis = current_stock.merge(avg_monthly_sales, on='Product', how='left')
+        inventory_analysis['Avg_Monthly_Sales'] = inventory_analysis['Avg_Monthly_Sales'].fillna(0)
+
+        # Calculate required stock (2 months of average sales + safety buffer)
+        inventory_analysis['Required_Stock'] = (inventory_analysis['Avg_Monthly_Sales'] * 2.5).round().astype(int)
+        inventory_analysis['Current_Stock'] = inventory_analysis['Stock_For_Month']
+        inventory_analysis['Shortage'] = np.maximum(0, inventory_analysis['Required_Stock'] - inventory_analysis[
+            'Current_Stock'])
+
+        # Calculate stock level categories
+        def get_stock_level(row):
+            if row['Current_Stock'] <= row['Avg_Monthly_Sales'] * 0.5:
+                return 'Critical'
+            elif row['Current_Stock'] <= row['Avg_Monthly_Sales']:
+                return 'Low'
+            elif row['Current_Stock'] <= row['Avg_Monthly_Sales'] * 2:
+                return 'Adequate'
+            else:
+                return 'High'
+
+        inventory_analysis['Stock_Level'] = inventory_analysis.apply(get_stock_level, axis=1)
+
+        # Calculate next restock date based on current stock and sales velocity
+        def calculate_restock_date(row):
+            if row['Avg_Monthly_Sales'] <= 0:
+                return "No sales data"
+
+            days_of_stock = (row['Current_Stock'] / (row['Avg_Monthly_Sales'] / 30))
+
+            if days_of_stock <= 7:
+                restock_days = 3  # Urgent
+            elif days_of_stock <= 30:
+                restock_days = int(days_of_stock * 0.7)  # Restock before running out
+            else:
+                restock_days = 30  # Monthly review
+
+            restock_date = datetime.now() + timedelta(days=restock_days)
+            return restock_date.strftime('%Y-%m-%d')
+
+        def calculate_days_until_restock(row):
+            if row['Avg_Monthly_Sales'] <= 0:
+                return 999
+
+            days_of_stock = (row['Current_Stock'] / (row['Avg_Monthly_Sales'] / 30))
+
+            if days_of_stock <= 7:
+                return 3
+            elif days_of_stock <= 30:
+                return int(days_of_stock * 0.7)
+            else:
+                return 30
+
+        inventory_analysis['Next_Restock_Date'] = inventory_analysis.apply(calculate_restock_date, axis=1)
+        inventory_analysis['Days_Until_Restock'] = inventory_analysis.apply(calculate_days_until_restock, axis=1)
+
+        # Calculate stock value
+        inventory_analysis['Stock_Value'] = inventory_analysis['Current_Stock'] * inventory_analysis['Cost_Price']
+
+        # Prepare summary statistics
+        total_products = len(inventory_analysis)
+        low_stock_count = len(inventory_analysis[inventory_analysis['Stock_Level'].isin(['Low', 'Critical'])])
+        critical_stock_count = len(inventory_analysis[inventory_analysis['Stock_Level'] == 'Critical'])
+        total_stock_value = inventory_analysis['Stock_Value'].sum()
+
+        # Stock distribution for charts
+        stock_distribution = inventory_analysis['Stock_Level'].value_counts().to_dict()
+
+        # Restock timeline
+        restock_timeline = []
+        for days in [3, 7, 14, 30]:
+            count = len(inventory_analysis[inventory_analysis['Days_Until_Restock'] <= days])
+            date = (datetime.now() + timedelta(days=days)).strftime('%m/%d')
+            restock_timeline.append({'date': f"Next {days}d", 'count': count})
+
+        # Convert to list of dictionaries for template
+        products_list = []
+        for _, row in inventory_analysis.iterrows():
+            products_list.append({
+                'name': row['Product'],
+                'current_stock': int(row['Current_Stock']),
+                'required_stock': int(row['Required_Stock']),
+                'shortage': int(row['Shortage']),
+                'stock_level': row['Stock_Level'],
+                'next_restock_date': row['Next_Restock_Date'],
+                'days_until_restock': int(row['Days_Until_Restock']),
+                'stock_value': float(row['Stock_Value'])
+            })
+
+        return {
+            'total_products': total_products,
+            'low_stock_count': low_stock_count,
+            'critical_stock_count': critical_stock_count,
+            'total_stock_value': float(total_stock_value),
+            'stock_distribution': stock_distribution,
+            'restock_timeline': restock_timeline,
+            'products': products_list
+        }
+
+    except Exception as e:
+        print(f"Error analyzing inventory data: {e}")
+        return None
+
+
+# Routes
+@app.route('/')
+def root():
+    return redirect(url_for('login'))
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        # Accept any credentials for demo purposes
+        if username and password:
+            session['logged_in'] = True
+            session['username'] = username
+            next_url = request.args.get('next')
+            return redirect(next_url or url_for('index'))
+        else:
+            flash('Please enter both username and password')
+
+    return render_template('login.html')
+
+
+@app.route('/home', methods=['GET', 'POST'])
+def index():
+    if not session.get('logged_in'):
+        return redirect(url_for('login', next=request.path))
+
+    if request.method == 'POST':
+        # Check if file was uploaded
+        if 'csv_file' not in request.files:
+            flash('No file selected')
+            return redirect(request.url)
+
+        file = request.files['csv_file']
+        date_filter = request.form.get('date_filter', 'all')
+        start_date = request.form.get('start_date', '')
+        end_date = request.form.get('end_date', '')
+
+        # Validate inputs
+        if file.filename == '':
+            flash('No file selected')
+            return redirect(request.url)
+
+        # Validate custom date range
+        if date_filter == 'custom':
+            if not start_date or not end_date:
+                flash('Please select both start and end dates for custom range')
+                return redirect(request.url)
+
+        if file and file.filename and allowed_file(file.filename):
+            # Save file to session for dashboard access
+            try:
+                temp_path = save_temp_file(file)
+                session['csv_file_path'] = temp_path
+                session['date_filter'] = date_filter
+                session['start_date'] = start_date
+                session['end_date'] = end_date
+
+                # Redirect to Executive Dashboard
+                return redirect(url_for('executive_dashboard'))
+
+            except Exception as e:
+                flash(f'Error processing file: {str(e)}')
+                return redirect(request.url)
+        else:
+            flash('Invalid file type. Please upload a CSV file.')
+            return redirect(request.url)
+
+    return render_template('upload.html')
+
+
+@app.route('/load-demo-data', methods=['POST'])
+def load_demo_data():
+    """Load demo CSV data"""
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+
+    try:
+        demo_type = request.form.get('demo_type')
+        date_filter = request.form.get('date_filter', 'all')
+        start_date = request.form.get('start_date', '')
+        end_date = request.form.get('end_date', '')
+
+        # Map demo types to file names
+        demo_files = {
+            'sample_sales_enhanced': 'sample_sales_enhanced.csv',
+            'synthetic_sales_100': 'synthetic_sales_100.csv',
+            'supermarket_data': 'supermarket_data.csv'
+        }
+
+        if demo_type not in demo_files:
+            flash('Invalid demo data type selected')
+            return redirect(url_for('index'))
+
+        # Get the file path
+        demo_file_path = demo_files[demo_type]
+
+        # Check if file exists
+        if not os.path.exists(demo_file_path):
+            flash(f'Demo file {demo_file_path} not found. Please ensure the file exists in your project root.')
+            return redirect(url_for('index'))
+
+        # Store demo file path in session (same as uploaded file)
+        session['csv_file_path'] = demo_file_path
+        session['date_filter'] = date_filter
+        session['start_date'] = start_date
+        session['end_date'] = end_date
+        session['demo_data'] = True  # Flag to indicate this is demo data
+
+        # Redirect to Executive Dashboard
+        return redirect(url_for('executive_dashboard'))
+
+    except Exception as e:
+        flash(f'Error loading demo data: {str(e)}')
+        return redirect(url_for('index'))
+
+
 @app.route('/dashboard/executive')
 def executive_dashboard():
     if 'csv_file_path' not in session:
@@ -696,141 +950,6 @@ def trends_dashboard():
         return redirect(url_for('index'))
 
 
-def analyze_inventory_data(df):
-    """Analyze inventory data and calculate stock requirements and restock dates"""
-    try:
-        if df.empty:
-            return None
-
-        # Check if we have stock data
-        if 'Stock_For_Month' not in df.columns:
-            return None
-
-        # Get the latest month's data for current stock levels
-        df['Date'] = pd.to_datetime(df['Date'])
-        latest_month = df['Date'].max().to_period('M')
-        current_month_data = df[df['Date'].dt.to_period('M') == latest_month]
-
-        # Calculate monthly sales velocity for each product
-        monthly_sales = df.groupby(['Product', df['Date'].dt.to_period('M')])['Quantity'].sum().reset_index()
-        monthly_sales.columns = ['Product', 'Month', 'Monthly_Sales']
-
-        # Calculate average monthly sales and stock requirements
-        avg_monthly_sales = monthly_sales.groupby('Product')['Monthly_Sales'].mean().reset_index()
-        avg_monthly_sales.columns = ['Product', 'Avg_Monthly_Sales']
-
-        # Get current stock levels (latest month)
-        current_stock = current_month_data.groupby('Product').agg({
-            'Stock_For_Month': 'first',  # Assuming stock is same across all entries for a product in a month
-            'Cost_Price': 'mean',
-            'Selling_Price': 'mean'
-        }).reset_index()
-
-        # Merge sales velocity with current stock
-        inventory_analysis = current_stock.merge(avg_monthly_sales, on='Product', how='left')
-        inventory_analysis['Avg_Monthly_Sales'] = inventory_analysis['Avg_Monthly_Sales'].fillna(0)
-
-        # Calculate required stock (2 months of average sales + safety buffer)
-        inventory_analysis['Required_Stock'] = (inventory_analysis['Avg_Monthly_Sales'] * 2.5).round().astype(int)
-        inventory_analysis['Current_Stock'] = inventory_analysis['Stock_For_Month']
-        inventory_analysis['Shortage'] = np.maximum(0, inventory_analysis['Required_Stock'] - inventory_analysis[
-            'Current_Stock'])
-
-        # Calculate stock level categories
-        def get_stock_level(row):
-            if row['Current_Stock'] <= row['Avg_Monthly_Sales'] * 0.5:
-                return 'Critical'
-            elif row['Current_Stock'] <= row['Avg_Monthly_Sales']:
-                return 'Low'
-            elif row['Current_Stock'] <= row['Avg_Monthly_Sales'] * 2:
-                return 'Adequate'
-            else:
-                return 'High'
-
-        inventory_analysis['Stock_Level'] = inventory_analysis.apply(get_stock_level, axis=1)
-
-        # Calculate next restock date based on current stock and sales velocity
-        def calculate_restock_date(row):
-            if row['Avg_Monthly_Sales'] <= 0:
-                return "No sales data"
-
-            days_of_stock = (row['Current_Stock'] / (row['Avg_Monthly_Sales'] / 30))
-
-            if days_of_stock <= 7:
-                restock_days = 3  # Urgent
-            elif days_of_stock <= 30:
-                restock_days = int(days_of_stock * 0.7)  # Restock before running out
-            else:
-                restock_days = 30  # Monthly review
-
-            restock_date = datetime.now() + timedelta(days=restock_days)
-            return restock_date.strftime('%Y-%m-%d')
-
-        def calculate_days_until_restock(row):
-            if row['Avg_Monthly_Sales'] <= 0:
-                return 999
-
-            days_of_stock = (row['Current_Stock'] / (row['Avg_Monthly_Sales'] / 30))
-
-            if days_of_stock <= 7:
-                return 3
-            elif days_of_stock <= 30:
-                return int(days_of_stock * 0.7)
-            else:
-                return 30
-
-        inventory_analysis['Next_Restock_Date'] = inventory_analysis.apply(calculate_restock_date, axis=1)
-        inventory_analysis['Days_Until_Restock'] = inventory_analysis.apply(calculate_days_until_restock, axis=1)
-
-        # Calculate stock value
-        inventory_analysis['Stock_Value'] = inventory_analysis['Current_Stock'] * inventory_analysis['Cost_Price']
-
-        # Prepare summary statistics
-        total_products = len(inventory_analysis)
-        low_stock_count = len(inventory_analysis[inventory_analysis['Stock_Level'].isin(['Low', 'Critical'])])
-        critical_stock_count = len(inventory_analysis[inventory_analysis['Stock_Level'] == 'Critical'])
-        total_stock_value = inventory_analysis['Stock_Value'].sum()
-
-        # Stock distribution for charts
-        stock_distribution = inventory_analysis['Stock_Level'].value_counts().to_dict()
-
-        # Restock timeline
-        restock_timeline = []
-        for days in [3, 7, 14, 30]:
-            count = len(inventory_analysis[inventory_analysis['Days_Until_Restock'] <= days])
-            date = (datetime.now() + timedelta(days=days)).strftime('%m/%d')
-            restock_timeline.append({'date': f"Next {days}d", 'count': count})
-
-        # Convert to list of dictionaries for template
-        products_list = []
-        for _, row in inventory_analysis.iterrows():
-            products_list.append({
-                'name': row['Product'],
-                'current_stock': int(row['Current_Stock']),
-                'required_stock': int(row['Required_Stock']),
-                'shortage': int(row['Shortage']),
-                'stock_level': row['Stock_Level'],
-                'next_restock_date': row['Next_Restock_Date'],
-                'days_until_restock': int(row['Days_Until_Restock']),
-                'stock_value': float(row['Stock_Value'])
-            })
-
-        return {
-            'total_products': total_products,
-            'low_stock_count': low_stock_count,
-            'critical_stock_count': critical_stock_count,
-            'total_stock_value': float(total_stock_value),
-            'stock_distribution': stock_distribution,
-            'restock_timeline': restock_timeline,
-            'products': products_list
-        }
-
-    except Exception as e:
-        print(f"Error analyzing inventory data: {e}")
-        return None
-
-
-# Add this route to your main.py file
 @app.route('/dashboard/inventory')
 def inventory_dashboard():
     if 'csv_file_path' not in session:
@@ -865,126 +984,88 @@ def inventory_dashboard():
         flash(f'Error loading inventory dashboard: {str(e)}')
         return redirect(url_for('index'))
 
-@app.route('/')
-def root():
-    return redirect(url_for('login'))
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-
-        # Accept any credentials
-        if username and password:
-            session['logged_in'] = True
-            session['username'] = username
-            dest = url_for('index')
-            return redirect(dest)
-        else:
-            flash('Please enter both username and password')
-
-    return render_template('login.html')
-
-@app.route('/home', methods=['GET', 'POST'])
-def index():
-    if not session.get('logged_in'):
-        return redirect(url_for('login', next=request.path))
-    if request.method == 'POST':
-        # Check if file was uploaded
-        if 'csv_file' not in request.files:
-            flash('No file selected')
-            return redirect(request.url)
-
-        file = request.files['csv_file']
-        date_filter = request.form.get('date_filter', 'all')
-        start_date = request.form.get('start_date', '')
-        end_date = request.form.get('end_date', '')
-
-        # Validate inputs
-        if file.filename == '':
-            flash('No file selected')
-            return redirect(request.url)
-
-        # Validate custom date range
-        if date_filter == 'custom':
-            if not start_date or not end_date:
-                flash('Please select both start and end dates for custom range')
-                return redirect(request.url)
-
-        if file and file.filename and allowed_file(file.filename):
-            # Save file to session for dashboard access
-            try:
-                temp_path = save_temp_file(file)
-                session['csv_file_path'] = temp_path
-                session['date_filter'] = date_filter
-                session['start_date'] = start_date
-                session['end_date'] = end_date
-
-                # Redirect to Executive Dashboard
-                return redirect(url_for('executive_dashboard'))
-
-            except Exception as e:
-                flash(f'Error processing file: {str(e)}')
-                return redirect(request.url)
-        else:
-            flash('Invalid file type. Please upload a CSV file.')
-            return redirect(request.url)
-
-    return render_template('upload.html')
+# Debug route to check session state
+@app.route('/debug/session')
+def debug_session():
+    """Debug route to check session data"""
+    return jsonify({
+        'logged_in': session.get('logged_in'),
+        'has_csv_path': 'csv_file_path' in session,
+        'csv_file_path': session.get('csv_file_path', 'Not set'),
+        'has_insights': 'current_insights' in session,
+        'gemini_client_status': gemini_client is not None,
+        'date_filter': session.get('date_filter'),
+        'start_date': session.get('start_date'),
+        'end_date': session.get('end_date'),
+        'session_keys': list(session.keys())
+    })
 
 
-@app.route('/load-demo-data', methods=['POST'])
-def load_demo_data():
-    """Load demo CSV data"""
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
+# Create login template
+@app.route('/create-login-template')
+def create_login_template():
+    """Create a basic login template if it doesn't exist"""
+    login_html = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - GrowthScope</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f6fa; margin: 0; padding: 50px; }
+        .container { max-width: 400px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 12px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 16px; }
+        button { width: 100%; background: #667eea; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #5a6fd8; }
+        .flash-messages { margin-bottom: 20px; }
+        .flash-message { padding: 15px; background: #f8d7da; color: #721c24; border-radius: 8px; margin-bottom: 10px; }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
+        .demo-note { background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #2d5a2d; text-align: center; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GrowthScope Login</h1>
+        <div class="demo-note">Demo Mode: Enter any username and password to login</div>
 
-    try:
-        demo_type = request.form.get('demo_type')
-        date_filter = request.form.get('date_filter', 'all')
-        start_date = request.form.get('start_date', '')
-        end_date = request.form.get('end_date', '')
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for message in messages %}
+                        <div class="flash-message">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
-        # Map demo types to file names
-        demo_files = {
-            'sample_sales_enhanced': 'sample_sales_enhanced.csv',
-            'synthetic_sales_100': 'synthetic_sales_100.csv',
-            'supermarket_data': 'supermarket_data.csv'
-        }
+        <form method="POST">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</body>
+</html>"""
 
-        if demo_type not in demo_files:
-            flash('Invalid demo data type selected')
-            return redirect(url_for('index'))
+    # Create templates directory if it doesn't exist
+    os.makedirs('templates', exist_ok=True)
 
-        # Get the file path
-        demo_file_path = demo_files[demo_type]
+    # Write login template
+    with open('templates/login.html', 'w') as f:
+        f.write(login_html)
 
-        # Check if file exists
-        if not os.path.exists(demo_file_path):
-            flash(f'Demo file {demo_file_path} not found. Please ensure the file exists in your project root.')
-            return redirect(url_for('index'))
+    return "Login template created successfully!"
 
-        # Store demo file path in session (same as uploaded file)
-        session['csv_file_path'] = demo_file_path
-        session['date_filter'] = date_filter
-        session['start_date'] = start_date
-        session['end_date'] = end_date
-        session['demo_data'] = True  # Flag to indicate this is demo data
-
-        # Add success message
-        demo_names = {
-            'sample_sales_enhanced': 'Enhanced Sales Data',
-            'synthetic_sales_100': 'Synthetic Sales Data (100 products)'
-        }
-
-        # Redirect to Executive Dashboard
-        return redirect(url_for('executive_dashboard'))
-
-    except Exception as e:
-        flash(f'Error loading demo data: {str(e)}')
-        return redirect(url_for('index'))
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port, debug=True)
