@@ -37,11 +37,53 @@
         .nav-brand {
             font-size: 1.5rem;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+        }
+
+        .logo svg {
+            width: 100%;
+            height: 100%;
         }
 
         .nav-menu {
             display: flex;
             gap: 30px;
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: 0.3s;
+            border-radius: 2px;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
         }
 
         .nav-item {
@@ -59,6 +101,20 @@
         .nav-item.active {
             background-color: rgba(255,255,255,0.3);
             font-weight: 600;
+        }
+
+        .nav-upload {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .nav-upload:hover {
+            background: rgba(255,255,255,0.3);
         }
 
         .container {
@@ -216,96 +272,45 @@
             font-weight: 600;
         }
 
-        .category-performance {
-            background: white;
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-
-        .category-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .category-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
+        .no-data {
             text-align: center;
-            border-left: 4px solid #667eea;
-        }
-
-        .category-name {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 8px;
-        }
-
-        .category-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 5px;
-            font-size: 0.9rem;
-        }
-
-        .category-revenue {
-            color: #667eea;
-            font-weight: 600;
-        }
-
-        .category-margin {
-            color: #28a745;
-            font-weight: 600;
-        }
-
-        .recommendations-card {
-            background: white;
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border-left: 5px solid #ffc107;
-        }
-
-        .recommendation-item {
-            background: #fff9e6;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-left: 4px solid #ffc107;
-        }
-
-        .recommendation-title {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-
-        .recommendation-desc {
-            color: #5d6d7e;
-            font-size: 0.95rem;
-        }
-
-        .nav-upload {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
-            text-decoration: none;
-            transition: background-color 0.3s;
-        }
-
-        .nav-upload:hover {
-            background: rgba(255,255,255,0.3);
+            color: #7f8c8d;
+            padding: 40px;
+            font-style: italic;
         }
 
         @media (max-width: 768px) {
+            .hamburger {
+                display: flex;
+            }
+
             .nav-menu {
-                display: none;
+                position: fixed;
+                top: 0;
+                left: -100%;
+                width: 80%;
+                max-width: 300px;
+                height: 100vh;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                flex-direction: column;
+                justify-content: flex-start;
+                align-items: flex-start;
+                padding: 80px 20px 20px;
+                transition: left 0.3s ease;
+                z-index: 1000;
+                gap: 10px;
+            }
+
+            .nav-menu.active {
+                left: 0;
+            }
+
+            .nav-item, .nav-upload {
+                width: 100%;
+                text-align: left;
+                padding: 15px 20px;
+                border-radius: 8px;
+                font-size: 16px;
             }
 
             .chart-grid {
@@ -320,27 +325,47 @@
                 grid-template-columns: 1fr;
             }
 
-            .category-grid {
-                grid-template-columns: 1fr;
-            }
-
             .nav-container {
-                flex-direction: column;
-                gap: 15px;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="nav-brand">GrowthScope</div>
-            <div class="nav-menu">
+            <div class="nav-brand">
+                <div class="logo">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="barGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#7ED321;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#4A90E2;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <rect x="15" y="70" width="8" height="20" fill="url(#barGradient1)" rx="1"/>
+                        <rect x="28" y="55" width="8" height="35" fill="url(#barGradient1)" rx="1"/>
+                        <rect x="41" y="40" width="8" height="50" fill="url(#barGradient1)" rx="1"/>
+                        <rect x="54" y="25" width="8" height="65" fill="url(#barGradient1)" rx="1"/>
+                    </svg>
+                </div>
+                GrowthScope
+            </div>
+
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div class="nav-menu" id="navMenu">
                 <a href="/dashboard/executive" class="nav-item">Executive</a>
                 <a href="/dashboard/financial" class="nav-item">Financial</a>
                 <a href="/dashboard/growth" class="nav-item active">Growth</a>
                 <a href="/dashboard/trends" class="nav-item">Market Trends</a>
+                <a href="/dashboard/inventory" class="nav-item">Inventory</a>
                 <a href="/dashboard/chat" class="nav-item">Chat</a>
                 <a href="/" class="nav-upload">Upload New Data</a>
             </div>
@@ -348,18 +373,17 @@
     </nav>
 
     <div class="container">
-        <!-- Page Header -->
         <div class="page-header">
             <h1 class="page-title">Growth & Opportunities</h1>
             <p class="page-subtitle">Customer insights and future growth opportunities</p>
-            {% if insights.date_summary %}
-                <div class="period-indicator">
-                    📅 {{ insights.date_summary.period_name }} | {{ insights.date_summary.start_date }} to {{ insights.date_summary.end_date }}
-                </div>
+            {% if insights and insights.date_summary %}
+            <div class="period-indicator">
+                📅 {{ insights.date_summary.period_name }} | {{ insights.date_summary.start_date }} to {{ insights.date_summary.end_date }}
+            </div>
             {% endif %}
         </div>
 
-        <!-- Growth Metrics -->
+        {% if insights %}
         <div class="growth-metrics">
             <div class="growth-card">
                 <div class="growth-value">{{ insights.product_aggregates|length }}</div>
@@ -400,7 +424,6 @@
             {% endif %}
         </div>
 
-        <!-- Charts Section -->
         <div class="chart-grid">
             <div class="chart-card">
                 <h3 class="chart-title">Product Portfolio Performance</h3>
@@ -417,27 +440,6 @@
             </div>
         </div>
 
-        <!-- Category Performance -->
-        {% if insights.category_summary and insights.category_summary|length > 1 %}
-        <div class="category-performance">
-            <h3 class="opportunity-title">Category Performance Overview</h3>
-            <div class="category-grid">
-                {% for category, data in insights.category_summary.items() %}
-                    {% if category != 'Unknown' %}
-                    <div class="category-item">
-                        <div class="category-name">{{ category }}</div>
-                        <div class="category-stats">
-                            <div class="category-revenue">${{ "%.0f"|format(data.Revenue) }}</div>
-                            <div class="category-margin">{{ "%.1f"|format(data.Margin) }}%</div>
-                        </div>
-                    </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Growth Opportunities -->
         <div class="opportunity-section">
             <div class="opportunity-card">
                 <h3 class="opportunity-title">Top Growth Opportunities</h3>
@@ -479,174 +481,205 @@
             </div>
         </div>
 
-        <!-- Strategic Recommendations -->
-        <div class="recommendations-card">
-            <h3 class="opportunity-title">Strategic Growth Recommendations</h3>
-
-            <div class="recommendation-item">
-                <div class="recommendation-title">Focus on High-Margin Products</div>
-                <div class="recommendation-desc">
-                    Your top-performing product "{{ insights.top_selling_product }}" generates ${{ "%.0f"|format(insights.top_product_revenue) }} in revenue.
-                    Consider increasing inventory and marketing focus on your most profitable items.
-                </div>
-            </div>
-
-            {% if insights.transaction_metrics %}
-            <div class="recommendation-item">
-                <div class="recommendation-title">Optimize Transaction Value</div>
-                <div class="recommendation-desc">
-                    Current average transaction value is ${{ "%.0f"|format(insights.transaction_metrics.avg_receipt_value) }} with {{ "%.1f"|format(insights.transaction_metrics.avg_items_per_receipt) }} items per basket.
-                    Consider bundle deals or cross-selling strategies to increase basket size and transaction value.
-                </div>
-            </div>
-
-            <div class="recommendation-item">
-                <div class="recommendation-title">Learn from High-Value Transactions</div>
-                <div class="recommendation-desc">
-                    Your largest transaction was ${{ "%.0f"|format(insights.transaction_metrics.largest_receipt) }}.
-                    Analyze what drove this high-value purchase and replicate those conditions to encourage similar transaction sizes.
-                </div>
-            </div>
-            {% endif %}
-
-            {% if insights.profit_margin < 20 %}
-            <div class="recommendation-item">
-                <div class="recommendation-title">Improve Profit Margins</div>
-                <div class="recommendation-desc">
-                    Current profit margin of {{ insights.profit_margin }}% is below optimal levels.
-                    Review pricing strategy and cost optimization opportunities to improve profitability.
-                </div>
-            </div>
-            {% endif %}
-
-            {% if insights.category_summary|length > 2 %}
-            <div class="recommendation-item">
-                <div class="recommendation-title">Leverage Category Diversification</div>
-                <div class="recommendation-desc">
-                    You operate across {{ insights.category_summary|length }} categories.
-                    Analyze cross-selling opportunities between categories to increase average order value.
-                </div>
-            </div>
-            {% endif %}
-
-            <div class="recommendation-item">
-                <div class="recommendation-title">Scale Successful Patterns</div>
-                <div class="recommendation-desc">
-                    {% if insights.transaction_metrics %}
-                    With {{ insights.transaction_metrics.total_receipts }} transactions and ${{ "%.0f"|format(insights.transaction_metrics.avg_receipt_value) }} average transaction value,
-                    {% else %}
-                    With {{ insights.total_quantity }} units sold and ${{ "%.0f"|format(insights.avg_revenue_per_item) }} average revenue per item,
-                    {% endif %}
-                    focus on scaling your proven business model to new markets or customer segments.
-                </div>
-            </div>
+        {% else %}
+        <div class="no-data">
+            <p>No data available. Please upload a CSV file to see your growth dashboard.</p>
         </div>
+        {% endif %}
     </div>
 
     <script>
-        // Product Portfolio Chart
-        const portfolioCtx = document.getElementById('portfolioChart').getContext('2d');
-        const productData = {{ insights.product_aggregates | tojson }};
-
-        // Create bubble chart data
-        const bubbleData = productData.map(product => ({
-            x: product.Revenue,
-            y: product.Margin_Pct,
-            r: Math.sqrt(product.Quantity) / 2, // Size based on quantity
-            label: product.Product
-        }));
-
-        new Chart(portfolioCtx, {
-            type: 'bubble',
-            data: {
-                datasets: [{
-                    label: 'Products',
-                    data: bubbleData,
-                    backgroundColor: 'rgba(102, 126, 234, 0.6)',
-                    borderColor: '#667eea',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Revenue ($)'
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + value.toLocaleString();
-                            }
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Profit Margin (%)'
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const point = context.raw;
-                                return point.label + ': $' + point.x.toLocaleString() + ' revenue, ' + point.y.toFixed(1) + '% margin';
-                            }
-                        }
-                    }
-                }
-            }
+        // Hamburger menu
+        document.getElementById('hamburger').addEventListener('click', function() {
+            this.classList.toggle('active');
+            document.getElementById('navMenu').classList.toggle('active');
         });
 
-        // Category Revenue Distribution Chart
-        const categoryCtx = document.getElementById('categoryRevenueChart').getContext('2d');
-        const categoryData = {{ insights.category_summary | tojson }};
+        // Debug: Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js is not loaded');
+        } else {
+            console.log('Chart.js loaded successfully');
+        }
 
-        const categoryLabels = Object.keys(categoryData).filter(cat => cat !== 'Unknown');
-        const categoryRevenues = categoryLabels.map(cat => categoryData[cat].Revenue);
+        // Get data from template with error handling
+        let productData, categoryData;
 
-        new Chart(categoryCtx, {
-            type: 'doughnut',
-            data: {
-                labels: categoryLabels,
-                datasets: [{
-                    data: categoryRevenues,
-                    backgroundColor: [
-                        '#667eea',
-                        '#28a745',
-                        '#ffc107',
-                        '#fd7e14',
-                        '#6f42c1',
-                        '#17a2b8'
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const value = context.parsed;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((value / total) * 100).toFixed(1);
-                                return context.label + ': $' + value.toLocaleString() + ' (' + percentage + '%)';
+        try {
+            productData = {% if insights and insights.product_aggregates %}{{ insights.product_aggregates | tojson }}{% else %}[]{% endif %};
+            categoryData = {% if insights and insights.category_summary %}{{ insights.category_summary | tojson }}{% else %}{}{% endif %};
+        } catch (e) {
+            console.error('Error parsing template data:', e);
+            productData = [];
+            categoryData = {};
+        }
+
+        console.log('Product Data:', productData);
+        console.log('Category Data:', categoryData);
+
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Product Portfolio Chart (Bubble Chart)
+            const portfolioCanvas = document.getElementById('portfolioChart');
+            if (portfolioCanvas) {
+                const portfolioCtx = portfolioCanvas.getContext('2d');
+
+                if (productData && Array.isArray(productData) && productData.length > 0) {
+                    try {
+                        console.log('Creating portfolio chart with', productData.length, 'products');
+
+                        // Create bubble chart data
+                        const bubbleData = productData.map(product => ({
+                            x: product.Revenue || 0,
+                            y: product.Margin_Pct || 0,
+                            r: Math.max(Math.sqrt(product.Quantity || 1) / 2, 5), // Minimum radius of 5
+                            label: product.Product || 'Unknown Product'
+                        }));
+
+                        console.log('Bubble data:', bubbleData.slice(0, 3)); // Log first 3 items
+
+                        new Chart(portfolioCtx, {
+                            type: 'bubble',
+                            data: {
+                                datasets: [{
+                                    label: 'Products',
+                                    data: bubbleData,
+                                    backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                                    borderColor: '#667eea',
+                                    borderWidth: 2
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    x: {
+                                        title: {
+                                            display: true,
+                                            text: 'Revenue ($)'
+                                        },
+                                        ticks: {
+                                            callback: function(value) {
+                                                return '$' + value.toLocaleString();
+                                            }
+                                        }
+                                    },
+                                    y: {
+                                        title: {
+                                            display: true,
+                                            text: 'Profit Margin (%)'
+                                        }
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                const point = context.raw;
+                                                return point.label + ': $' + point.x.toLocaleString() + ' revenue, ' + point.y.toFixed(1) + '% margin';
+                                            }
+                                        }
+                                    }
+                                }
                             }
-                        }
+                        });
+                        console.log('Portfolio chart created successfully');
+                    } catch (e) {
+                        console.error('Error creating portfolio chart:', e);
+                        portfolioCtx.font = "16px Arial";
+                        portfolioCtx.fillStyle = "#dc3545";
+                        portfolioCtx.textAlign = "center";
+                        portfolioCtx.fillText("Error loading chart", portfolioCanvas.width/2, portfolioCanvas.height/2);
                     }
+                } else {
+                    console.log('No product data available for portfolio chart');
+                    portfolioCtx.font = "16px Arial";
+                    portfolioCtx.fillStyle = "#7f8c8d";
+                    portfolioCtx.textAlign = "center";
+                    portfolioCtx.fillText("No product data available", portfolioCanvas.width/2, portfolioCanvas.height/2);
                 }
+            } else {
+                console.error('Portfolio canvas not found');
+            }
+
+            // Category Revenue Distribution Chart (Doughnut Chart)
+            const categoryCanvas = document.getElementById('categoryRevenueChart');
+            if (categoryCanvas) {
+                const categoryCtx = categoryCanvas.getContext('2d');
+
+                if (categoryData && typeof categoryData === 'object' && Object.keys(categoryData).length > 0) {
+                    try {
+                        const categoryLabels = Object.keys(categoryData).filter(cat => cat !== 'Unknown');
+                        const categoryRevenues = categoryLabels.map(cat => categoryData[cat].Revenue || 0);
+
+                        console.log('Creating category chart with labels:', categoryLabels);
+                        console.log('Category revenues:', categoryRevenues);
+
+                        if (categoryLabels.length > 0 && categoryRevenues.some(rev => rev > 0)) {
+                            new Chart(categoryCtx, {
+                                type: 'doughnut',
+                                data: {
+                                    labels: categoryLabels,
+                                    datasets: [{
+                                        data: categoryRevenues,
+                                        backgroundColor: [
+                                            '#667eea',
+                                            '#28a745',
+                                            '#ffc107',
+                                            '#fd7e14',
+                                            '#6f42c1',
+                                            '#17a2b8'
+                                        ],
+                                        borderWidth: 0
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            position: 'bottom'
+                                        },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function(context) {
+                                                    const value = context.parsed;
+                                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                                    const percentage = ((value / total) * 100).toFixed(1);
+                                                    return context.label + ': $' + value.toLocaleString() + ' (' + percentage + '%)';
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                            console.log('Category chart created successfully');
+                        } else {
+                            console.log('No valid category revenue data');
+                            categoryCtx.font = "16px Arial";
+                            categoryCtx.fillStyle = "#7f8c8d";
+                            categoryCtx.textAlign = "center";
+                            categoryCtx.fillText("No category revenue data", categoryCanvas.width/2, categoryCanvas.height/2);
+                        }
+                    } catch (e) {
+                        console.error('Error creating category chart:', e);
+                        categoryCtx.font = "16px Arial";
+                        categoryCtx.fillStyle = "#dc3545";
+                        categoryCtx.textAlign = "center";
+                        categoryCtx.fillText("Error loading chart", categoryCanvas.width/2, categoryCanvas.height/2);
+                    }
+                } else {
+                    console.log('No category data available for chart');
+                    categoryCtx.font = "16px Arial";
+                    categoryCtx.fillStyle = "#7f8c8d";
+                    categoryCtx.textAlign = "center";
+                    categoryCtx.fillText("No category data available", categoryCanvas.width/2, categoryCanvas.height/2);
+                }
+            } else {
+                console.error('Category canvas not found');
             }
         });
     </script>

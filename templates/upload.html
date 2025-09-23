@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GrowthScope  - Upload Data</title>
+    <title>GrowthScope - Upload Data</title>
     <style>
         * {
             margin: 0;
@@ -34,15 +34,35 @@
             padding: 40px 20px;
         }
 
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .header-logo {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+        }
+
+        .header-logo svg {
+            width: 100%;
+            height: 100%;
+        }
+
         .header h1 {
             font-size: 2.5rem;
-            margin-bottom: 10px;
+            margin: 0;
             font-weight: 300;
         }
 
         .header p {
             font-size: 1.1rem;
             opacity: 0.9;
+            margin-top: 10px;
         }
 
         .content {
@@ -55,13 +75,6 @@
             padding: 30px;
             margin-bottom: 30px;
             border: 2px dashed #dee2e6;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-            margin-bottom: 25px;
         }
 
         .form-group {
@@ -135,6 +148,33 @@
             transform: translateY(-2px);
         }
 
+        .demo-btn {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(23, 162, 184, 0.4);
+        }
+
+        .demo-btn small {
+            display: block;
+            font-size: 11px;
+            font-weight: normal;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
         .flash-messages {
             margin-bottom: 20px;
         }
@@ -192,10 +232,6 @@
                 padding: 20px;
             }
 
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
             .custom-date-range {
                 grid-template-columns: 1fr;
             }
@@ -203,13 +239,61 @@
             .features-grid {
                 grid-template-columns: 1fr;
             }
+
+            .header-brand {
+                flex-direction: column;
+                gap: 10px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>GrowthScope </h1>
+            <div class="header-brand">
+                <div class="header-logo">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <!-- Gradient definitions -->
+                            <linearGradient id="headerBarGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#7ED321;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#4A90E2;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="headerBarGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#50E3C2;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#4A90E2;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="headerBarGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#7ED321;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#417505;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="headerArrowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#7ED321;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#50E3C2;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#4A90E2;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="headerCurveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#7ED321;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#0F4F36;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+
+                        <!-- Growth bars -->
+                        <rect x="15" y="70" width="8" height="20" fill="url(#headerBarGradient1)" rx="1"/>
+                        <rect x="28" y="55" width="8" height="35" fill="url(#headerBarGradient2)" rx="1"/>
+                        <rect x="41" y="40" width="8" height="50" fill="url(#headerBarGradient3)" rx="1"/>
+                        <rect x="54" y="25" width="8" height="65" fill="url(#headerBarGradient1)" rx="1"/>
+
+                        <!-- Curved arrow base -->
+                        <path d="M 15 85 Q 35 95 55 85 Q 75 75 85 45"
+                              stroke="url(#headerCurveGradient)" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+                        <!-- Arrow head -->
+                        <polygon points="85,20 90,15 95,20 85,30" fill="url(#headerArrowGradient)"/>
+                    </svg>
+                </div>
+                <h1>GrowthScope</h1>
+            </div>
             <p>Transform your sales data into actionable business insights</p>
         </div>
 
@@ -259,13 +343,26 @@
                             <input type="file"
                                    id="csv_file"
                                    name="csv_file"
-                                   accept=".csv"
-                                   required>
+                                   accept=".csv">
                         </div>
                         <small style="color: #6c757d; margin-top: 5px; display: block;">
-                            Required columns: Date, Product, Revenue, Cost, Quantity<br>
-                            Optional columns: Brand, Category, StockOnHand, LeadTimeDays, SafetyStock
+                            Required columns: Date, Receipt ID, Product Name, Brand Name, Category, Quantity, Selling Price, Cost Price, Stock For Month<br>
                         </small>
+                    </div>
+
+                    <!-- Demo Data Section -->
+                    <div style="text-align: center; margin: 20px 0;">
+                        <p style="color: #6c757d; margin-bottom: 15px; font-weight: 600;">Or try with sample data:</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <button type="button" class="demo-btn" onclick="loadDemoData('synthetic_sales_100')">
+                                📈 Fashion Dataset<br>
+                                <small>100 products sample dataset</small>
+                            </button>
+                            <button type="button" class="demo-btn" onclick="loadDemoData('supermarket_data')">
+                                📈 Supermarket Dataset<br>
+                                <small>4000+ order records</small>
+                            </button>
+                        </div>
                     </div>
 
                     <button type="submit" class="submit-btn">
@@ -293,6 +390,16 @@
                         <div class="feature-title">Growth Insights</div>
                         <div class="feature-desc">Customer trends and future opportunities</div>
                     </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🌍</div>
+                        <div class="feature-title">Market Trends</div>
+                        <div class="feature-desc">Regional market insights and seasonal trends</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">💬</div>
+                        <div class="feature-title">AI Chat Assistant</div>
+                        <div class="feature-desc">Ask questions about your data and get instant insights</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -308,6 +415,53 @@
             } else {
                 customDateRange.style.display = 'none';
             }
+        }
+
+        function loadDemoData(demoType) {
+            // Create a form to submit demo data request
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/load-demo-data';
+
+            // Add demo type
+            const demoInput = document.createElement('input');
+            demoInput.type = 'hidden';
+            demoInput.name = 'demo_type';
+            demoInput.value = demoType;
+            form.appendChild(demoInput);
+
+            // Add current form values
+            const dateFilter = document.getElementById('date_filter').value;
+            const dateFilterInput = document.createElement('input');
+            dateFilterInput.type = 'hidden';
+            dateFilterInput.name = 'date_filter';
+            dateFilterInput.value = dateFilter;
+            form.appendChild(dateFilterInput);
+
+            if (dateFilter === 'custom') {
+                const startDate = document.getElementById('start_date').value;
+                const endDate = document.getElementById('end_date').value;
+
+                if (startDate) {
+                    const startInput = document.createElement('input');
+                    startInput.type = 'hidden';
+                    startInput.name = 'start_date';
+                    startInput.value = startDate;
+                    form.appendChild(startInput);
+                }
+
+                if (endDate) {
+                    const endInput = document.createElement('input');
+                    endInput.type = 'hidden';
+                    endInput.name = 'end_date';
+                    endInput.value = endDate;
+                    form.appendChild(endInput);
+                }
+            }
+
+            // Submit the form
+            document.body.appendChild(form);
+            form.submit();
         }
 
         // Initialize on page load
