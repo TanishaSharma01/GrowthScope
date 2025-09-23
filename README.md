@@ -27,14 +27,17 @@ A comprehensive business intelligence platform designed specifically for Austral
 
 ### Home Page
 ![Financial Dashboard](docs/home-page.png)
+
 *Home page of GrowthScope Application*
 
 ### Executive Dashboard
 ![Executive Dashboard](docs/executive-snapshot.png)
+
 *Real-time KPIs and business health monitoring*
 
 ### AI Chat Assistant
 ![AI Chat](docs/ai-chatbot.png)
+
 *Natural language business intelligence queries*
 
 ## ✨ Key Features
