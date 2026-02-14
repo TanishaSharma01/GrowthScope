@@ -14,7 +14,7 @@ import numpy as np
 from datetime import datetime, timedelta
 
 # Initialize Gemini client with error handling
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', "AIzaSyD27VX_Kjr8wmfw3icVwxtMWTLgGc5yw3Q")
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 if not GEMINI_API_KEY:
     print("WARNING: GEMINI_API_KEY not found in environment variables!")
     gemini_client = None
